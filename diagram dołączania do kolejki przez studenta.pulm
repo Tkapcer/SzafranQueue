@@ -1,0 +1,19 @@
+@startuml
+skinparam DefaultTextAlignment center
+
+start
+:Przeglądaj listę sal;
+:Sprawdź status sal;
+
+if (Czy jakaś sala jest wolna?) then (tak)
+  :Zajmij salę (maks. na 2h);
+  :Zapisz status sali jako zajęta;
+  :Potwierdź rezerwację studentowi;
+else (nie)
+  :Dołącz do kolejki;
+  :Dodaj studenta do listy oczekujących;
+  :Wyświetl pozycję w kolejce;
+endif
+
+stop
+@enduml
