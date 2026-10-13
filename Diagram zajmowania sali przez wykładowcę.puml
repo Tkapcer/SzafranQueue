@@ -1,0 +1,30 @@
+@startuml
+skinparam DefaultTextAlignment center
+
+start
+:Wykładowca przegląda dostępne sale;
+
+if (Czy wszystkie sale są zajęte?) then (tak)
+  :Dołącz do kolejki dla wykładowców;
+  stop
+else (nie - są wolne lub zajęte przez studentów)
+  if (Czy wybrana sala jest zajęta przez innego wykładowcę?) then (tak)
+    :Powrót do wyboru sal;
+    stop
+  else (nie - sala wolna lub zajęta przez studenta)
+    if (Czy sala jest wolna?) then (tak)
+      :Zajmij salę na dowolny czas;
+    else (nie - sala zajęta przez studenta)
+      :Wejdź do sali i wyproś studenta;
+          if (Czy minęło 15 min od zajęcia sali przez studenta) then (tak)
+             :Przenieś studenta na koniec kolejki;
+          else (nie)
+             :Przenieś studenta na 1. miejsce w kolejce;
+          endif
+      :Zajmij zwolnioną salę na dowolny czas;
+    endif
+  endif
+endif
+
+stop
+@enduml
