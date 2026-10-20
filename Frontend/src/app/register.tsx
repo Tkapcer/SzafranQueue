@@ -10,6 +10,7 @@ import { ThemedView } from '@/components/themed-view';
 export default function RegisterScreen() {
   const router = useRouter();
   const [name, setName] = useState('');
+  const [surname, setSurname] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -23,6 +24,7 @@ export default function RegisterScreen() {
       <SafeAreaView style={styles.form}>
         <ThemedText type="title" style={styles.title}>Registration</ThemedText>
         <AuthInput placeholder="Name" value={name} onChangeText={setName} />
+        <AuthInput placeholder="Surname" value={surname} onChangeText={setSurname} />
         <AuthInput
           placeholder="Email"
           autoCapitalize="none"
