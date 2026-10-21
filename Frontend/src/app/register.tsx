@@ -15,7 +15,7 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('');
 
   const onRegister = () => {
-    // TODO: wywołanie API backendu
+    // TODO: przekazanie danych do backendu
     router.replace('/home');
   };
 
