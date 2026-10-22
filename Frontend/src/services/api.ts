@@ -2,7 +2,7 @@ import axios from 'axios';
 import { Platform } from 'react-native';
 import { storage } from './storage'; // Import nowego adaptera
 
-const DEV_IP = '192.168.1.XX'; // Podmień na swoje IP z ipconfig dla telefonu
+const DEV_IP = '192.168.0.213'; // Podmień na swoje IP z ipconfig dla telefonu
 
 const BASE_URL = Platform.OS === 'web' 
   ? 'http://localhost:8000/api' 

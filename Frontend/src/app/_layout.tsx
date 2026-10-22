@@ -13,7 +13,7 @@ export default function RootLayout() {
   const colorScheme = useColorScheme(); // wykrywanie motywu systemowego (ciemny/jasny)
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }} /> {/*ukrywa nagłówek*/}
+      <Stack screenOptions={{ headerShown: false }} />
     </ThemeProvider>
   );
 }
