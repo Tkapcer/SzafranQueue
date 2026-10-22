@@ -1,5 +1,6 @@
 // "opakowanie" dla wszystkich ekranów w aplikacji
 
+import "../global.css";
 import { DarkTheme, DefaultTheme, ThemeProvider, Stack } from 'expo-router'; 
 // import motywów, 
 // ThemeProvider - udostępnianie motywów w całej aplikacji 
