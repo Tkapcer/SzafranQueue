@@ -80,8 +80,8 @@ export default function LoginScreen() {
           value={password}
           onChangeText={setPassword}
         />
-        <Pressable 
-          style={[styles.button, isLoading && styles.buttonDisabled]} 
+        <Pressable
+          style={[styles.button, isLoading && styles.buttonDisabled]}
           onPress={onLogin}
           disabled={isLoading}
         >
@@ -91,7 +91,7 @@ export default function LoginScreen() {
             <ThemedText style={styles.buttonText}>Log in</ThemedText>
           )}
         </Pressable>
-        <Pressable onPress={() => router.push('/register')}> 
+        <Pressable onPress={() => router.push('/register')}>
           <ThemedText type="link" style={styles.center}>Register</ThemedText>
         </Pressable>
       </SafeAreaView>
