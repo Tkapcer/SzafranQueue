@@ -5,7 +5,7 @@ import { storage } from '@/services/storage';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { api } from '@/services/api'; 
+import { api } from '@/services/api';
 
 // Definiujemy strukturę danych użytkownika dla TypeScriptu
 interface User {
