@@ -1,26 +1,72 @@
 import { useRouter } from 'expo-router'; // nawigacja między ekranami
 import { useState } from 'react'; // hook trzyma dane i po zmianie odświeżają ekran
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context'; // omija obszary kamery, status i pasek gestów, żeby treść na to nie wchodziła
+
+import { storage } from '@/services/storage';
 
 import { AuthInput } from '@/components/auth-input';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+
+
+import { api } from '@/services/api'; // Upewnij się, że ścieżka do Twojej konfiguracji Axios jest poprawna
 
 export default function LoginScreen() {
   const router = useRouter(); // hook do nawigacji między ekranami
   const [email, setEmail] = useState(''); // email to aktualna wartość, setEmail do zmiany, '' wartość początkowa
   const [password, setPassword] = useState(''); // analogicznie
 
-  const onLogin = () => {
-    // TODO: wysłanie danych do backendu i sprawdzenie ich poprawności
-    router.replace('/home'); // przejście do ekranu home
+  // Obsluga stanu ładowania i błędów
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const onLogin = async () => {
+    if (!email || !password) {
+      setErrorMessage('Wprowadź email i hasło.');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setErrorMessage('');
+
+      // Wysłanie danych do backendu
+      const response = await api.post('/login', {
+        email,
+        password,
+      });
+
+      const token = response.data.token;
+      const user = response.data.user; // Złapanie obiektu użytkownika z odpowiedzi
+
+      await storage.setItem('userToken', token);
+      await storage.setItem('userData', JSON.stringify(user));
+
+      router.replace('/home');
+    } catch (error: any) {
+      console.error('Błąd logowania:', error);
+      // Obsługa błędów zwróconych przez backend (np. 401 Unauthorized)
+      if (error.response && error.response.data.message) {
+        setErrorMessage(error.response.data.message);
+      } else {
+        setErrorMessage('Wystąpił błąd połączenia z serwerem.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.form}>
         <ThemedText type="title" style={styles.title}>SzafranQueue</ThemedText>
+
+        {/* Wyświetlanie błędu */}
+        {errorMessage ? (
+          <ThemedText style={styles.errorText}>{errorMessage}</ThemedText>
+        ) : null}
+
         <AuthInput
           placeholder="Email" // podpowiadający tekst
           autoCapitalize="none" // nie zmieni pierwszej litery na wielką
@@ -34,8 +80,16 @@ export default function LoginScreen() {
           value={password}
           onChangeText={setPassword}
         />
-        <Pressable style={styles.button} onPress={onLogin}>
-          <ThemedText style={styles.buttonText}>Log in</ThemedText>
+        <Pressable 
+          style={[styles.button, isLoading && styles.buttonDisabled]} 
+          onPress={onLogin}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <ThemedText style={styles.buttonText}>Log in</ThemedText>
+          )}
         </Pressable>
         <Pressable onPress={() => router.push('/register')}> 
           <ThemedText type="link" style={styles.center}>Register</ThemedText>
@@ -52,4 +106,6 @@ const styles = StyleSheet.create({
   button: { backgroundColor: '#333333', padding: 14, borderRadius: 8, alignItems: 'center' },
   buttonText: { color: '#F1EBDC', fontWeight: '600' },
   center: { textAlign: 'center' },
+  errorText: { color: 'red', textAlign: 'center', marginBottom: 10 },
+  buttonDisabled: { opacity: 0.7 },
 });

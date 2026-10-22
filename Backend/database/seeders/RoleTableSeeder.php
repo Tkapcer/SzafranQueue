@@ -12,16 +12,16 @@ class RoleTableSeeder extends Seeder
     public function run(): void
     {
         DB::table('role')->insert([
-            ['name' => 'manager'],
-            ['name' => 'student'],
-            ['name' => 'lecturer'],
+            ['name' => 'manager', 'alias' => 'Zarządca'],
+            ['name' => 'student', 'alias' => 'Student'],
+            ['name' => 'lecturer', 'alias' => 'Wykładowca'],
         ]);
 
         User::create([
             'name' => 'Admin',
-            'surname' => 'User',
+            'surname' => 'Admin',
             'email' => 'account@example.com',
-            'password' => bcrypt('password'),
+            'password' => bcrypt('Haslo1'),
             'roleId' => Role::where('name', 'manager')->first()->id,
             'isApproved' => true,
         ]);
