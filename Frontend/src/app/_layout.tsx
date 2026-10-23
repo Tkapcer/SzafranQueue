@@ -8,7 +8,6 @@ import { DarkTheme, DefaultTheme, ThemeProvider, Stack } from 'expo-router';
 
 import { useColorScheme } from 'react-native';
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
-import '@/global.css';
 
 // useColorScheme - wykrywanie motywu systemowego (ciemny/jasny)
 
@@ -16,12 +15,11 @@ export default function RootLayout() {
   const colorScheme = useColorScheme(); // wykrywanie motywu systemowego (ciemny/jasny)
   return (
     
-    <GluestackUIProvider mode="dark">
+    <GluestackUIProvider mode={colorScheme === 'dark' ? 'dark' : 'light'}>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }} /> {/*ukrywa nagłówek*/}
-    </ThemeProvider>
+        <Stack screenOptions={{ headerShown: false }} /> {/*ukrywa nagłówek*/}
+      </ThemeProvider>
     </GluestackUIProvider>
-  
   );
 }
 // funkcja zwracająca interfejs

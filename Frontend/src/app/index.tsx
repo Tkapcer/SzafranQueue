@@ -1,14 +1,16 @@
 import { useRouter } from 'expo-router'; // nawigacja między ekranami
 import { useState } from 'react'; // hook trzyma dane i po zmianie odświeżają ekran
-import { Pressable, StyleSheet, ActivityIndicator } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context'; // omija obszary kamery, status i pasek gestów, żeby treść na to nie wchodziła
 
 import { storage } from '@/services/storage';
 
-import { AuthInput } from '@/components/auth-input';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-
+import { Box } from '@/components/ui/box';
+import { Heading } from '@/components/ui/heading';
+import { Text } from '@/components/ui/text';
+import { Input, InputField } from '@/components/ui/input';
+import { Button, ButtonText } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 
 import { api } from '@/services/api'; // Upewnij się, że ścieżka do Twojej konfiguracji Axios jest poprawna
 
@@ -58,54 +60,46 @@ export default function LoginScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <Box className="flex-1 bg-background">
       <SafeAreaView style={styles.form}>
-        <ThemedText type="title" style={styles.title}>SzafranQueue</ThemedText>
+        <Heading size="4xl" className="text-center mb-4 text-foreground">SzafranQueue</Heading>
 
         {/* Wyświetlanie błędu */}
         {errorMessage ? (
-          <ThemedText style={styles.errorText}>{errorMessage}</ThemedText>
+          <Text className="text-center mb-2.5 text-destructive">{errorMessage}</Text>
         ) : null}
 
-        <AuthInput
-          placeholder="Email" // podpowiadający tekst
-          autoCapitalize="none" // nie zmieni pierwszej litery na wielką
-          keyboardType="email-address"
-          value={email} // aktualna wprowadzona wartość
-          onChangeText={setEmail} // każda zmiana od razu widoczna
-        />
-        <AuthInput
-          placeholder="Password"
-          secureTextEntry // ukrywa wprowadzany tekst
-          value={password}
-          onChangeText={setPassword}
-        />
-        <Pressable
-          style={[styles.button, isLoading && styles.buttonDisabled]}
-          onPress={onLogin}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <ThemedText style={styles.buttonText}>Log in</ThemedText>
-          )}
-        </Pressable>
+        <Input className="h-12 rounded-lg border border-input">
+          <InputField
+            className="text-foreground"
+            placeholder="Email" // podpowiadający tekst
+            autoCapitalize="none" // nie zmieni pierwszej litery na wielką
+            keyboardType="email-address"
+            value={email} // aktualna wprowadzona wartość
+            onChangeText={setEmail} // każda zmiana od razu widoczna
+          />
+        </Input>
+        <Input className="h-12 rounded-lg border border-input">
+          <InputField
+            className="text-foreground bg-transparent"
+            placeholder="Password"
+            secureTextEntry // ukrywa wprowadzany tekst
+            value={password}
+            onChangeText={setPassword}
+          />
+        </Input>
+        <Button onPress={onLogin} disabled={isLoading} className={`bg-secondary ${isLoading ? 'opacity-70' : ''}`}>
+          {isLoading ? <Spinner /> : <ButtonText className="text-foreground">Log in</ButtonText>}
+        </Button>
         <Pressable onPress={() => router.push('/register')}>
-          <ThemedText type="link" style={styles.center}>Register</ThemedText>
+          <Text size="sm" className="text-center text-foreground">Register</Text>
         </Pressable>
       </SafeAreaView>
-    </ThemedView>
+    </Box>
   );
 }
 
+// SafeAreaView zostawiony na StyleSheet, bo className może na nim nie działać
 const styles = StyleSheet.create({
-  container: { flex: 1 },
   form: { flex: 1, justifyContent: 'center', padding: 24, gap: 12, width: '100%', maxWidth: 400, alignSelf: 'center' },
-  title: { textAlign: 'center', marginBottom: 16 },
-  button: { backgroundColor: '#333333', padding: 14, borderRadius: 8, alignItems: 'center' },
-  buttonText: { color: '#F1EBDC', fontWeight: '600' },
-  center: { textAlign: 'center' },
-  errorText: { color: 'red', textAlign: 'center', marginBottom: 10 },
-  buttonDisabled: { opacity: 0.7 },
 });
