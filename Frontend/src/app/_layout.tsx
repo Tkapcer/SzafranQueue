@@ -17,7 +17,8 @@ export default function RootLayout() {
     
     <GluestackUIProvider mode={colorScheme === 'dark' ? 'dark' : 'light'}>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack screenOptions={{ headerShown: false }} /> {/*ukrywa nagłówek*/}
+        <Stack screenOptions={{ headerShown: false }} />
+          {/*ukrywa nagłówek*/}
       </ThemeProvider>
     </GluestackUIProvider>
   );
