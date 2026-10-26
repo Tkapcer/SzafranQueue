@@ -25,7 +25,7 @@ export default function LoginScreen() {
 
   const onLogin = async () => {
     if (!email || !password) {
-      setErrorMessage('Wprowadź email i hasło.');
+      setErrorMessage('Enter email and password.');
       return;
     }
 
@@ -46,13 +46,14 @@ export default function LoginScreen() {
       await storage.setItem('userData', JSON.stringify(user));
 
       router.replace('/home');
+
     } catch (error: any) {
-      console.error('Błąd logowania:', error);
+      console.error('Login error:', error);
       // Obsługa błędów zwróconych przez backend (np. 401 Unauthorized)
       if (error.response && error.response.data.message) {
         setErrorMessage(error.response.data.message);
       } else {
-        setErrorMessage('Wystąpił błąd połączenia z serwerem.');
+        setErrorMessage('An error occurred while connecting to the server.');
       }
     } finally {
       setIsLoading(false);
