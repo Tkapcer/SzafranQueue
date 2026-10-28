@@ -9,13 +9,8 @@ import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { HStack } from '@/components/ui/hstack';
 
-import { Pressable, StyleSheet, ActivityIndicator, View } from 'react-native';
-
-
-
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { api } from '@/services/api';
 
 // Definiujemy strukturę danych użytkownika dla TypeScriptu
@@ -41,7 +36,7 @@ export default function HomeScreen() {
           setUser(JSON.parse(userDataString)); // Zamiana tekstu z powrotem na obiekt
         }
       } catch (error) {
-        console.error('Błąd ładowania danych użytkownika', error);
+        console.error('Error loading user data:', error);
       } finally {
         setIsLoading(false);
       }
@@ -59,7 +54,7 @@ export default function HomeScreen() {
         });
       }
     } catch (error) {
-      console.log('Błąd wylogowywania:', error);
+      console.log('Error logging out:', error);
     } finally {
       // Usuwamy zarówno token, jak i dane użytkownika z pamięci!
       await storage.deleteItem('userToken');
@@ -72,10 +67,10 @@ export default function HomeScreen() {
   // Helper do zamiany ID roli na czytelny tekst
   const getRoleName = (roleId: number) => {
     switch(roleId) {
-      case 1: return 'Zarządca';
+      case 1: return 'Porter';
       case 2: return 'Student';
-      case 3: return 'Wykładowca';
-      default: return 'Nieznana rola';
+      case 3: return 'Lecturer';
+      default: return 'Unknown';
     }
   };
 
@@ -86,6 +81,17 @@ if (isLoading) {
     </Center>
   );
 }
+
+const rooms = [
+  { id: 1, name: '101', withPiano: true },
+  { id: 2, name: '102', withPiano: false },
+  { id: 3, name: '201', withPiano: true },
+]; // TODO: pobierać z backendu
+
+const onReserve = (roomId: number) => {
+  // TODO: wywołanie API rezerwacji
+  console.log('Reserve room', roomId);
+};
 
 return (
   <Center className="flex-1 bg-background p-5">
@@ -107,6 +113,28 @@ return (
     ) : (
       <Text className="mb-5 text-destructive">Failed to load profile.</Text>
     )}
+
+    <VStack className="w-full rounded-xl border border-border mb-10">
+    {/* Nagłówek */}
+    <HStack className="p-3 border-b border-border items-center">
+        <Text className="flex-1 font-bold text-foreground">Room</Text>
+        <Text className="w-20 font-bold text-foreground">Piano</Text>
+        {user?.roleId === 1 && <Box className="w-28" />}
+    </HStack>
+
+    {/* Wiersze */}
+    {rooms.map((room) => (
+        <HStack key={room.id} className="p-3 border-b border-border items-center">
+        <Text className="flex-1 text-foreground">{room.name}</Text>
+        <Text className="w-20 text-muted-foreground">{room.withPiano ? 'Piano' : 'No piano'}</Text>
+        {user?.roleId === 1 && (
+            <Button size="sm" className="w-28 bg-primary" onPress={() => onReserve(room.id)}>
+            <ButtonText>Book</ButtonText>
+            </Button>
+        )}
+        </HStack>
+    ))}
+    </VStack>
 
     <Button className="bg-secondary" onPress={onLogout}>
       <ButtonText className="text-foreground">Log out</ButtonText>
