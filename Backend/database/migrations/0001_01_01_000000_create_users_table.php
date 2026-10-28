@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('alias')->nullable();
+            $table->boolean('isSelectable')->default(false);
         });
 
         Schema::create('users', function (Blueprint $table) {

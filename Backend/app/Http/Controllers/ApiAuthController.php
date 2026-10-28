@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\RegisterRequest;
+use App\Http\Resources\RoleResource;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Hash;
 
 class ApiAuthController extends Controller
@@ -51,5 +55,29 @@ class ApiAuthController extends Controller
         return response()->json([
             'message' => 'Wylogowano pomyślnie'
         ]);
+    }
+
+    public function register(RegisterRequest $request): User
+    {
+        $data = $request->validated();
+
+        $user = new User([
+            'name' => $data['name'],
+            'surname' => $data['surname'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+        ]);
+
+        $user->role()->associate(Role::findOrFail($data['roleId']));
+        $user->save();
+
+        return $user;
+    }
+
+    public function roles(): AnonymousResourceCollection
+    {
+        return RoleResource::collection(
+            Role::where('isSelectable', true)->get()
+        );
     }
 }

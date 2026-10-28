@@ -12,9 +12,9 @@ class RoleTableSeeder extends Seeder
     public function run(): void
     {
         DB::table('role')->insert([
-            ['name' => 'manager', 'alias' => 'Zarządca'],
-            ['name' => 'student', 'alias' => 'Student'],
-            ['name' => 'lecturer', 'alias' => 'Wykładowca'],
+            ['name' => 'manager', 'alias' => 'Zarządca', 'isSelectable' => false],
+            ['name' => 'student', 'alias' => 'Student', 'isSelectable' => true],
+            ['name' => 'lecturer', 'alias' => 'Wykładowca', 'isSelectable' => true],
         ]);
 
         User::create([

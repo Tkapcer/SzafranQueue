@@ -36,4 +36,9 @@ class User extends Authenticatable
             'isApproved' => 'boolean',
         ];
     }
+
+    public function role()
+    {
+        return $this->belongsTo(Role::class, 'roleId');
+    }
 }
