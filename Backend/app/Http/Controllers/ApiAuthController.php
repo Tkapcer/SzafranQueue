@@ -57,7 +57,7 @@ class ApiAuthController extends Controller
         ]);
     }
 
-    public function register(RegisterRequest $request): User
+    public function register(RegisterRequest $request)
     {
         $data = $request->validated();
 
@@ -71,7 +71,10 @@ class ApiAuthController extends Controller
         $user->role()->associate(Role::findOrFail($data['roleId']));
         $user->save();
 
-        return $user;
+        return response()->json([
+            'message' => 'Rejestracja pomyślna',
+            'user' => $user
+        ], 201);
     }
 
     public function roles(): AnonymousResourceCollection

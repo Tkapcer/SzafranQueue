@@ -7,11 +7,11 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Role;
 use App\Models\User;
 
-class RoleTableSeeder extends Seeder
+class RolesTableSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('role')->insert([
+        DB::table('roles')->insert([
             ['name' => 'manager', 'alias' => 'Zarządca', 'isSelectable' => false],
             ['name' => 'student', 'alias' => 'Student', 'isSelectable' => true],
             ['name' => 'lecturer', 'alias' => 'Wykładowca', 'isSelectable' => true],

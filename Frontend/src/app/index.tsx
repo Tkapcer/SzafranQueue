@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router'; // nawigacja między ekranami
+import { useRouter, useLocalSearchParams } from 'expo-router'; // nawigacja między ekranami
 import { useState } from 'react'; // hook trzyma dane i po zmianie odświeżają ekran
 import { Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context'; // omija obszary kamery, status i pasek gestów, żeby treść na to nie wchodziła
@@ -18,6 +18,7 @@ export default function LoginScreen() {
   const router = useRouter(); // hook do nawigacji między ekranami
   const [email, setEmail] = useState(''); // email to aktualna wartość, setEmail do zmiany, '' wartość początkowa
   const [password, setPassword] = useState(''); // analogicznie
+  const { registered } = useLocalSearchParams<{ registered?: string }>()
 
   // Obsluga stanu ładowania i błędów
   const [isLoading, setIsLoading] = useState(false);
@@ -67,6 +68,12 @@ export default function LoginScreen() {
         {/* Wyświetlanie błędu */}
         {errorMessage ? (
           <Text className="text-center mb-2.5 text-destructive">{errorMessage}</Text>
+        ) : null}
+
+        {registered ? (
+            <Text className="text-center mb-2.5 text-emerald-600 font-medium">
+              Konto zostało utworzone. Poczekaj na zatwierdzenie przez administratora przed zalogowaniem.
+            </Text>
         ) : null}
 
         <Input className="h-12 rounded-lg border border-input">

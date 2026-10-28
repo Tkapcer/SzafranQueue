@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 // Trasy publiczne (nie wymagają tokenu)
 Route::post('/login', [ApiAuthController::class, 'login']);
 Route::get('/roles', [ApiAuthController::class, 'roles']);
+Route::post('/register', [ApiAuthController::class, 'register']);
 
 // Trasy chronione (wymagają tokenu w nagłówku)
 Route::middleware('auth:sanctum')->group(function () {

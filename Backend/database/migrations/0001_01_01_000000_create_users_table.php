@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('role', function (Blueprint $table) {
+        Schema::create('roles', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('alias')->nullable();
@@ -26,7 +26,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->boolean('isApproved')->default(false);
-            $table->foreignId('roleId')->constrained('role')->onDelete('restrict');
+            $table->foreignId('roleId')->constrained('roles')->onDelete('restrict');
             $table->rememberToken();
             $table->timestamps();
         });
@@ -77,7 +77,7 @@ return new class extends Migration
         Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
         Schema::dropIfExists('room');
-        Schema::dropIfExists('role');
+        Schema::dropIfExists('roles');
         Schema::dropIfExists('student');
         Schema::dropIfExists('lecturer');
     }
