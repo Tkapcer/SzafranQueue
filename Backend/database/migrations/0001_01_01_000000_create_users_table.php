@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('alias')->nullable();
-            $table->boolean('isSelectable')->default(false);
+            $table->boolean('is_selectable')->default(false);
         });
 
         Schema::create('users', function (Blueprint $table) {
@@ -25,8 +25,8 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->boolean('isApproved')->default(false);
-            $table->foreignId('roleId')->constrained('roles')->onDelete('restrict');
+            $table->boolean('is_approved')->default(false);
+            $table->foreignId('role_id')->constrained('roles')->onDelete('restrict');
             $table->rememberToken();
             $table->timestamps();
         });
@@ -34,22 +34,22 @@ return new class extends Migration
         Schema::create('room', function (Blueprint $table) {
             $table->id();
             $table->string('number');
-            $table->boolean('hasPiano')->default(false);
-            $table->boolean('isOpen')->default(false);
-            $table->dateTime('entryTime')->nullable();
-            $table->foreignId('userId')->constrained('users')->onDelete('set null')->nullable();
+            $table->boolean('has_piano')->default(false);
+            $table->boolean('is_open')->default(false);
+            $table->dateTime('entry_time')->nullable();
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
         });
 
         Schema::create('student', function (Blueprint $table) {
             $table->id();
-            $table->string('idCardPhotoPath')->nullable();
-            $table->foreignId('userId')->constrained('users')->onDelete('cascade');
+            $table->string('id_card_photo_path')->nullable();
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
         });
 
         Schema::create('lecturer', function (Blueprint $table) {
             $table->id();
-            $table->string('idCardPhotoPath')->nullable();
-            $table->foreignId('accountId')->constrained('users')->onDelete('cascade');
+            $table->string('id_card_photo_path')->nullable();
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

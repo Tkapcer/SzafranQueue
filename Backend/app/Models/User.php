@@ -19,8 +19,8 @@ class User extends Authenticatable
         'surname',
         'email',
         'password',
-        'roleId',
-        'isApproved',
+        'role_id',
+        'is_approved',
     ];
 
     protected $hidden = [
@@ -33,12 +33,12 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'isApproved' => 'boolean',
+            'is_approved' => 'boolean',
         ];
     }
 
     public function role()
     {
-        return $this->belongsTo(Role::class, 'roleId');
+        return $this->belongsTo(Role::class, 'role_id');
     }
 }

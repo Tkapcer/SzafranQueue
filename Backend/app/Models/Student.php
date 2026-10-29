@@ -9,7 +9,7 @@ class Student extends Model
     protected $table = 'student';
 
     protected $fillable = [
-        'userId',
-        'idCardPhotoPath',
+        'user_id',
+        'id_card_photo_path',
     ];
 }

@@ -9,7 +9,7 @@ class Lecturer extends Model
     protected $table = 'lecturer';
 
     protected $fillable = [
-        'userId',
-        'idCardPhotoPath',
+        'user_id',
+        'id_card_photo_path',
     ];
 }

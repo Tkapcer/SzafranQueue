@@ -30,8 +30,8 @@ class ApiAuthController extends Controller
             ], 401);
         }
 
-        // 4. Sprawdzenie, czy konto jest zatwierdzone (Twoja kolumna isApproved)
-        if (!$user->isApproved) {
+        // 4. Sprawdzenie, czy konto jest zatwierdzone (Twoja kolumna is_approved)
+        if (!$user->is_approved) {
             return response()->json([
                 'message' => 'Twoje konto oczekuje na zatwierdzenie przez administratora.'
             ], 403);
@@ -68,7 +68,7 @@ class ApiAuthController extends Controller
             'password' => Hash::make($data['password']),
         ]);
 
-        $user->role()->associate(Role::findOrFail($data['roleId']));
+        $user->role()->associate(Role::findOrFail($data['role_id']));
         $user->save();
 
         return response()->json([
@@ -80,7 +80,7 @@ class ApiAuthController extends Controller
     public function roles(): AnonymousResourceCollection
     {
         return RoleResource::collection(
-            Role::where('isSelectable', true)->get()
+            Role::where('is_selectable', true)->get()
         );
     }
 }

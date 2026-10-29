@@ -27,10 +27,10 @@ class RegisterRequest extends FormRequest
             'name' => 'required|string|max:255',
             'surname' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
-            'roleId' => [
+            'role_id' => [
                 'required',
                 'integer',
-                Rule::exists('roles', 'id')->where('isSelectable', true),
+                Rule::exists('roles', 'id')->where('is_selectable', true),
                 ],
             'password' => 'required|min:8',
         ];
@@ -48,9 +48,9 @@ class RegisterRequest extends FormRequest
             'email.required' => 'Email is required',
             'email.email' => 'Email must be a valid email address',
             'email.unique' => 'Email already exists',
-            'roleId.required' => 'Role is required',
-            'roleId.integer' => 'Role must be an integer',
-            'roleId.exists' => 'Invalid role',
+            'role_id.required' => 'Role is required',
+            'role_id.integer' => 'Role must be an integer',
+            'role_id.exists' => 'Invalid role',
             'password.required' => 'Password is required',
             'password.min' => 'Password must be at least 8 characters',
         ];
