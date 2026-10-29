@@ -1,0 +1,46 @@
+@startuml
+
+actor Użytkownik
+
+box "Frontend"
+    boundary RegisterForm
+end box
+
+box "Backend"
+    control ApiAuthController
+    entity RegisterRequest
+    entity User
+    database Database
+end box
+
+Użytkownik -> RegisterForm: Wypełnienie i wysłanie formularza
+activate RegisterForm
+RegisterForm -> ApiAuthController: POST /register
+deactivate RegisterForm
+activate ApiAuthController
+ApiAuthController -> RegisterRequest: Walidacja danych
+
+alt Poprawne dane przekazane przez użytkownika
+    activate RegisterRequest
+    RegisterRequest --> ApiAuthController: Dane po walidacji
+    ApiAuthController --> User: Stworzenie nowego
+    activate User
+
+    User --> ApiAuthController: Nowa instancja klasy User
+    deactivate User
+    ApiAuthController -> Database: INSERT INTO users
+    activate Database
+    Database --> ApiAuthController: Potwierdzenie
+    deactivate Database
+    ApiAuthController -> ApiAuthController: Zapis obiektu User w sesji
+    ApiAuthController --> Użytkownik: Przeniesienie na stronę logowania z informacją o oczekiwaniu na zatwierdzenie konta
+else Niepoprawne dane przekazane przez użytkownika
+    RegisterRequest --> ApiAuthController: Komunikaty o błędach walidacji
+    deactivate RegisterRequest
+    ApiAuthController --> RegisterForm: Komunikaty o błędach walidacji
+    deactivate ApiAuthController
+    activate RegisterForm
+    RegisterForm --> Użytkownik: Wyświetlenie komunikatów o błędach
+    deactivate RegisterForm
+end
+@enduml
