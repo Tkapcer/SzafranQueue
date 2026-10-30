@@ -65,7 +65,7 @@ export default function RegisterScreen() {
         surname,
         email,
         password,
-        roleId: Number(selectedRoleId),
+        role_id: Number(selectedRoleId),
       });
 
       router.replace({
