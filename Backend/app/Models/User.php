@@ -41,4 +41,9 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Role::class, 'role_id');
     }
+
+    public function paths()
+    {
+        return $this->hasMany(Path::class);
+    }
 }
