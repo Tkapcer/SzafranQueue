@@ -1,17 +1,9 @@
 import { useRouter, useLocalSearchParams } from 'expo-router'; // nawigacja między ekranami
 import { useState } from 'react'; // hook trzyma dane i po zmianie odświeżają ekran
-import { Pressable, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context'; // omija obszary kamery, status i pasek gestów, żeby treść na to nie wchodziła
+
+import { AppScreen, AppHeading, AppText, AppInput, AppButton, AppLink } from '@/components/app';
 
 import { storage } from '@/services/storage';
-
-import { Box } from '@/components/ui/box';
-import { Heading } from '@/components/ui/heading';
-import { Text } from '@/components/ui/text';
-import { Input, InputField } from '@/components/ui/input';
-import { Button, ButtonText } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
-
 import { api } from '@/services/api'; // Upewnij się, że ścieżka do Twojej konfiguracji Axios jest poprawna
 
 export default function LoginScreen() {
@@ -62,52 +54,28 @@ export default function LoginScreen() {
   };
 
   return (
-    <Box className="flex-1 bg-background">
-      <SafeAreaView style={styles.form}>
-        <Heading size="4xl" className="text-center mb-4 text-foreground">SzafranQueue</Heading>
+    <AppScreen variant="form">
+      <AppHeading variant="title">SzafranQueue</AppHeading>
 
-        {/* Wyświetlanie błędu */}
-        {errorMessage ? (
-          <Text className="text-center mb-2.5 text-destructive">{errorMessage}</Text>
-        ) : null}
+      {errorMessage ? <AppText variant="error" className="mb-2.5">{errorMessage}</AppText> : null}
 
-        {registered ? (
-            <Text className="text-center mb-2.5 text-emerald-600 font-medium">
-              Konto zostało utworzone. Poczekaj na zatwierdzenie przez administratora przed zalogowaniem.
-            </Text>
-        ) : null}
+      {registered ? (
+        <AppText variant="success" className="mb-2.5">
+          Konto zostało utworzone. Poczekaj na zatwierdzenie przez administratora przed zalogowaniem.
+        </AppText>
+      ) : null}
 
-        <Input className="h-12 rounded-lg border border-input">
-          <InputField
-            className="text-foreground"
-            placeholder="Email" // podpowiadający tekst
-            autoCapitalize="none" // nie zmieni pierwszej litery na wielką
-            keyboardType="email-address"
-            value={email} // aktualna wprowadzona wartość
-            onChangeText={setEmail} // każda zmiana od razu widoczna
-          />
-        </Input>
-        <Input className="h-12 rounded-lg border border-input">
-          <InputField
-            className="text-foreground bg-transparent"
-            placeholder="Password"
-            secureTextEntry // ukrywa wprowadzany tekst
-            value={password}
-            onChangeText={setPassword}
-          />
-        </Input>
-        <Button onPress={onLogin} disabled={isLoading} className={`bg-secondary ${isLoading ? 'opacity-70' : ''}`}>
-          {isLoading ? <Spinner /> : <ButtonText className="text-foreground">Log in</ButtonText>}
-        </Button>
-        <Pressable onPress={() => router.push('/register')}>
-          <Text size="sm" className="text-center text-foreground">Register</Text>
-        </Pressable>
-      </SafeAreaView>
-    </Box>
+      <AppInput
+        placeholder="Email"
+        autoCapitalize="none"
+        keyboardType="email-address"
+        value={email}
+        onChangeText={setEmail}
+      />
+      <AppInput placeholder="Password" secureTextEntry value={password} onChangeText={setPassword} />
+
+      <AppButton title="Log in" variant="secondary" loading={isLoading} onPress={onLogin} />
+      <AppLink title="Register" onPress={() => router.push('/register')} />
+    </AppScreen>
   );
 }
-
-// SafeAreaView zostawiony na StyleSheet, bo className może na nim nie działać
-const styles = StyleSheet.create({
-  form: { flex: 1, justifyContent: 'center', padding: 24, gap: 12, width: '100%', maxWidth: 400, alignSelf: 'center' },
-});

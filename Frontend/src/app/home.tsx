@@ -4,12 +4,12 @@ import { storage } from '@/services/storage';
 
 import { Box } from '@/components/ui/box';
 import { Center } from '@/components/ui/center';
-import { VStack } from '@/components/ui/vstack';
-import { Heading } from '@/components/ui/heading';
-import { Text } from '@/components/ui/text';
-import { Button, ButtonText } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { HStack } from '@/components/ui/hstack';
+import { ScrollView } from 'react-native';
+
+import {
+  AppScreen, AppLoadingScreen, AppHeading, AppText, AppButton, AppCard, AppRow,
+} from '@/components/app';
 
 import { api } from '@/services/api';
 
@@ -99,102 +99,83 @@ export default function HomeScreen() {
   };
 
   if (isLoading) {
-    return (
-      <Center className="flex-1 bg-background">
-        <Spinner size="large" />
-      </Center>
-    );
+    return <AppLoadingScreen />;
   }
 
   // Filtrowanie sal: zamknięte widzi tylko portier (role_id === 1)
-  const filteredRooms = rooms.filter((room) => {
-    if (room.is_open) return true;
-    return user?.role_id === 1;
-  });
+  const isManager = user?.role_id === 1; // portier
+
+  // Zamknięte sale widzi tylko portier
+  const filteredRooms = rooms.filter((room) => room.is_open || isManager);
 
   return (
-    <Center className="flex-1 bg-background p-5">
-      <Heading size="2xl" className="mb-8 text-foreground">
-        Profile
-      </Heading>
+    <AppScreen>
+      <AppHeading className="mb-8">Profile</AppHeading>
 
       {user ? (
-        <VStack className="w-full items-center rounded-xl border border-border p-5 mb-10" space="xs">
-          <Text className="text-muted-foreground">Logged in as:</Text>
-          <Heading size="lg" className="text-foreground mb-3">
-            {user.name} {user.surname}
-          </Heading>
-          <Text className="text-muted-foreground">Role:</Text>
-          <Heading size="lg" className="text-foreground mb-3">
-            {getRoleName(user.role_id)}
-          </Heading>
-        </VStack>
+        <AppCard className="items-center p-5 mb-10" space="xs">
+          <AppText variant="muted">Logged in as:</AppText>
+          <AppHeading variant="value">{user.name} {user.surname}</AppHeading>
+          <AppText variant="muted">Role:</AppText>
+          <AppHeading variant="value">{getRoleName(user.role_id)}</AppHeading>
+        </AppCard>
       ) : (
-        <Text className="mb-5 text-destructive">Failed to load profile.</Text>
+        <AppText variant="error" className="mb-5">Failed to load profile.</AppText>
       )}
 
-      {/* Przycisk dodawania nowej sali (widoczny tylko dla portiera/managera role_id === 1) */}
-      {user?.role_id === 1 && (
-        <Button 
-          className="w-full mb-4 bg-primary" 
+      {isManager && (
+        <AppButton
+          title="Add new room"
+          className="w-full mb-4"
           onPress={() => router.push({ pathname: '/editRoom', params: { action: 'new' } })}
-        >
-          <ButtonText>Add new room</ButtonText>
-        </Button>
+        />
       )}
 
-      <VStack className="w-full rounded-xl border border-border mb-10">
-        {/* Nagłówek tabeli */}
-        <HStack className="p-3 border-b border-border items-center">
-          <Text className="flex-1 font-bold text-foreground">Room</Text>
-          <Text className="w-20 font-bold text-foreground">Piano</Text>
-          {user?.role_id === 1 && <Text className="w-20 font-bold text-foreground">Status</Text>}
-          {user?.role_id === 1 && <Box className="w-20" />}
-        </HStack>
+      <AppCard className="flex-1 min-h-0 mb-6 overflow-hidden">
+        {/* Nagłówek tabeli (stały) */}
+        <AppRow divider="bottom">
+          <AppText variant="bold" className="flex-1">Room</AppText>
+          <AppText variant="bold" className="w-20">Piano</AppText>
+          {isManager && <AppText variant="bold" className="w-20">Status</AppText>}
+          {isManager && <Box className="w-20" />}
+        </AppRow>
 
-        {/* Wiersze / Stan ładowania / Brak sal */}
+        {/* Wiersze / ładowanie / brak sal */}
         {isRoomsLoading ? (
           <Center className="p-5">
             <Spinner size="small" />
           </Center>
         ) : filteredRooms.length === 0 ? (
-          <Text className="p-4 text-center text-muted-foreground">No rooms available.</Text>
+          <AppText variant="muted" className="p-4 text-center">No rooms available.</AppText>
         ) : (
-          filteredRooms.map((room) => (
-            <HStack key={room.id} className="p-3 border-b border-border items-center">
-              <Text className="flex-1 text-foreground">{room.number}</Text>
-              <Text className="w-20 text-muted-foreground">{room.has_piano ? 'Piano' : 'No piano'}</Text>
-              
-              {/* Kolumna ze statusem otwarcia widoczna tylko dla portiera */}
-              {user?.role_id === 1 && (
-                <Text className="w-20 text-muted-foreground">
-                  {room.is_open ? 'Open' : 'Closed'}
-                </Text>
-              )}
+          <ScrollView>
+            {filteredRooms.map((room, index) => (
+              <AppRow key={room.id} divider={index > 0 ? 'top' : 'none'}>
+                <AppText className="flex-1">{room.number}</AppText>
+                <AppText variant="muted" className="w-20">{room.has_piano ? 'Piano' : 'No piano'}</AppText>
 
-              {/* Przyciski akcji dla portiera (Edycja) */}
-              {user?.role_id === 1 ? (
-                <Button 
-                  size="sm" 
-                  className="w-20 bg-secondary" 
-                  onPress={() => router.push({ pathname: '/editRoom', params: { action: 'edit', id: room.id } })}
-                >
-                  <ButtonText>Edit</ButtonText>
-                </Button>
-              ) : (
-                /* Przycisk rezerwacji dla zwykłego użytkownika */
-                <Button size="sm" className="w-28 bg-primary" onPress={() => onReserve(room.id)}>
-                  <ButtonText>Book</ButtonText>
-                </Button>
-              )}
-            </HStack>
-          ))
+                {isManager && (
+                  <AppText variant="muted" className="w-20">{room.is_open ? 'Open' : 'Closed'}</AppText>
+                )}
+
+                {isManager ? (
+                  <AppButton
+                    title="Edit"
+                    variant="secondary"
+                    size="sm"
+                    className="w-20"
+                    onPress={() => router.push({ pathname: '/editRoom', params: { action: 'edit', id: room.id } })}
+                  />
+                ) : (
+                  <AppButton title="Book" size="sm" className="w-28" onPress={() => onReserve(room.id)} />
+                )}
+              </AppRow>
+            ))}
+          </ScrollView>
         )}
-      </VStack>
+      </AppCard>
 
-      <Button className="bg-secondary" onPress={onLogout}>
-        <ButtonText className="text-foreground">Log out</ButtonText>
-      </Button>
-    </Center>
+      <AppButton title="Log out" variant="secondary" onPress={onLogout} />
+    </AppScreen>
   );
 }

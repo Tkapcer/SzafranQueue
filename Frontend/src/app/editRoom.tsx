@@ -11,6 +11,10 @@ import { Input, InputField } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { HStack } from '@/components/ui/hstack';
 
+import {
+  AppScreen, AppLoadingScreen, AppHeading, AppText, AppInput, AppButton, AppCard, AppSwitchRow,
+} from '@/components/app';
+
 import { api } from '@/services/api';
 
 export default function EditRoomScreen() {
@@ -107,69 +111,40 @@ export default function EditRoomScreen() {
   }
 
   return (
-    <Center className="flex-1 bg-background p-5">
-      <Heading size="2xl" className="mb-6 text-foreground">
-        {isEditMode ? 'Edit room' : 'Add new room'}
-      </Heading>
+    <AppScreen>
+      <AppHeading className="mb-6">{isEditMode ? 'Edit room' : 'Add new room'}</AppHeading>
 
-      {errorMessage ? (
-        <Text className="mb-4 text-destructive text-center">{errorMessage}</Text>
-      ) : null}
+      {errorMessage ? <AppText variant="error" className="mb-4">{errorMessage}</AppText> : null}
 
-      <VStack className="w-full rounded-xl border border-border p-5 mb-6" space="md">
+      <AppCard className="p-5 mb-6" space="md">
         <VStack space="xs">
-          <Text className="text-muted-foreground">Room number</Text>
-          <Input className="border border-border rounded-md">
-            <InputField 
-              placeholder="e.g. 101" 
-              value={number} 
-              onChangeText={setNumber}
-            />
-          </Input>
+          <AppText variant="muted">Room number</AppText>
+          <AppInput placeholder="e.g. 101" value={number} onChangeText={setNumber} />
         </VStack>
 
-        <HStack className="justify-between items-center py-2">
-          <Text className="text-foreground">Has piano?</Text>
-          <Switch 
-            value={hasPiano} 
-            onValueChange={setHasPiano} 
-          />
-        </HStack>
+        <AppSwitchRow label="Has piano?" value={hasPiano} onChange={setHasPiano} />
+        <AppSwitchRow label="Is open?" value={isOpen} onChange={setIsOpen} />
+      </AppCard>
 
-        <HStack className="justify-between items-center py-2">
-          <Text className="text-foreground">Is open?</Text>
-          <Switch 
-            value={isOpen} 
-            onValueChange={setIsOpen} 
-          />
-        </HStack>
-      </VStack>
-
-      <Button 
-        className="w-full bg-primary mb-3" 
-        onPress={handleSave}
-        disabled={isLoading}
-      >
-        {isLoading ? <Spinner color="white" /> : <ButtonText>Save</ButtonText>}
-      </Button>
+      <AppButton title="Save" className="w-full mb-3" loading={isLoading} onPress={handleSave} />
 
       {isEditMode && (
-        <Button 
-          className="w-full bg-error mb-3" 
-          onPress={handleDelete}
+        <AppButton
+          title="Delete room"
+          variant="danger"
+          className="w-full mb-3"
           disabled={isLoading}
-        >
-          <ButtonText className="text-white">Delete room</ButtonText>
-        </Button>
+          onPress={handleDelete}
+        />
       )}
 
-      <Button 
-        className="w-full bg-secondary" 
-        onPress={() => router.back()}
+      <AppButton
+        title="Back"
+        variant="secondary"
+        className="w-full"
         disabled={isLoading}
-      >
-        <ButtonText className="text-foreground">Back</ButtonText>
-      </Button>
-    </Center>
+        onPress={() => router.back()}
+      />
+    </AppScreen>
   );
 }
