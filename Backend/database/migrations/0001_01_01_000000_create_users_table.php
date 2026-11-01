@@ -26,9 +26,16 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->boolean('is_approved')->default(false);
+            $table->boolean('is_active')->default(true);
             $table->foreignId('role_id')->constrained('roles')->onDelete('restrict');
             $table->rememberToken();
             $table->timestamps();
+        });
+
+        Schema::create('paths', function (Blueprint $table) {
+            $table->id();
+            $table->string('id_card_path');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
         });
 
         Schema::create('room', function (Blueprint $table) {
@@ -38,18 +45,6 @@ return new class extends Migration
             $table->boolean('is_open')->default(false);
             $table->dateTime('entry_time')->nullable();
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
-        });
-
-        Schema::create('student', function (Blueprint $table) {
-            $table->id();
-            $table->string('id_card_photo_path')->nullable();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-        });
-
-        Schema::create('lecturer', function (Blueprint $table) {
-            $table->id();
-            $table->string('id_card_photo_path')->nullable();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
@@ -78,7 +73,6 @@ return new class extends Migration
         Schema::dropIfExists('sessions');
         Schema::dropIfExists('room');
         Schema::dropIfExists('roles');
-        Schema::dropIfExists('student');
-        Schema::dropIfExists('lecturer');
+        Schema::dropIfExists('paths');
     }
 };
