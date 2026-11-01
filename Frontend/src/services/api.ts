@@ -1,11 +1,11 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
-import { storage } from './storage'; // Import nowego adaptera
+import { storage } from './storage';
 
-const DEV_IP = '192.168.0.213'; // Podmień na swoje IP z ipconfig dla telefonu
+const DEV_IP = process.env.EXPO_PUBLIC_DEV_IP || 'localhost';
 
 const BASE_URL = Platform.OS === 'web' 
-  ? 'http://localhost:8000/api' 
+  ? 'http://127.0.0.1:8000/api' 
   : `http://${DEV_IP}:8000/api`;
 
 export const api = axios.create({
@@ -19,7 +19,6 @@ export const api = axios.create({
 
 api.interceptors.request.use(
   async (config) => {
-    // Bezpieczny odczyt działający zarówno w Webie, jak i na telefonie
     const token = await storage.getItem('userToken');
     
     if (token && config.headers) {

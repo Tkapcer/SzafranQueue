@@ -21,6 +21,7 @@ class User extends Authenticatable
         'password',
         'role_id',
         'is_approved',
+        'is_active',
     ];
 
     protected $hidden = [
@@ -40,5 +41,10 @@ class User extends Authenticatable
     public function role()
     {
         return $this->belongsTo(Role::class, 'role_id');
+    }
+
+    public function paths()
+    {
+        return $this->hasMany(Path::class);
     }
 }

@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\RegisterRequest;
 use App\Http\Resources\RoleResource;
+use App\Models\Path;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class ApiAuthController extends Controller
 {
@@ -61,20 +64,60 @@ class ApiAuthController extends Controller
     {
         $data = $request->validated();
 
-        $user = new User([
-            'name' => $data['name'],
-            'surname' => $data['surname'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
-        ]);
+        $uploadedFiles = [];
 
-        $user->role()->associate(Role::findOrFail($data['role_id']));
-        $user->save();
+        DB::beginTransaction();
 
-        return response()->json([
-            'message' => 'Rejestracja pomyślna',
-            'user' => $user
-        ], 201);
+        try {
+            $user = new User([
+                'name' => $data['name'],
+                'surname' => $data['surname'],
+                'email' => $data['email'],
+                'password' => Hash::make($data['password']),
+            ]);
+
+
+            $user->role()->associate(Role::findOrFail($data['role_id']));
+            $user->save();
+
+            if($request->hasFile('id_card_photo_front')) {
+                $path = $request->file('id_card_photo_front')->store('id_card_photos');
+                $uploadedFiles[] = $path;
+
+                $user->paths()->create([
+                    'id_card_path' => $path,
+                ]);
+            }
+
+            if($request->hasFile('id_card_photo_back')) {
+                $path = $request->file('id_card_photo_back')->store('id_card_photos');
+                $uploadedFiles[] = $path;
+
+                $user->paths()->create([
+                    'id_card_path' => $path,
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Rejestracja pomyślna',
+                'user' => $user
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            if (!empty($uploadedFiles)) {
+                foreach ($uploadedFiles as $file) {
+                    Storage::delete($file);
+                }
+            }
+
+            return response()->json([
+                'message' => 'Rejestracja nie powiodła się',
+                'error' => $e->getMessage()     //Można by na produkcji usunąć zwracanie $e
+            ], 500);
+        }
     }
 
     public function roles(): AnonymousResourceCollection
