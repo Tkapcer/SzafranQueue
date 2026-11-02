@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
-import { Alert, View, Linking } from 'react-native';
+import { Alert, View, Linking, Platform } from 'react-native';
 
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
@@ -140,11 +140,22 @@ export default function RegisterScreen() {
       formData.append('password', password);
       formData.append('role_id', selectedRoleId);
 
+      // Inne pakowanie pliku dla Web, inne dla Mobile
+      const appendFile = async (key: string, file: FileAsset) => {
+        if (Platform.OS === 'web') {
+          const response = await fetch(file.uri);
+          const blob = await response.blob();
+          formData.append(key, blob, file.name);
+        } else {
+          formData.append(key, file as any);
+        }
+      };
+
       if (idCardFront) {
-        formData.append('id_card_photo_front', idCardFront as any);
+        await appendFile('id_card_photo_front', idCardFront);
       }
       if (idCardBack) {
-        formData.append('id_card_photo_back', idCardBack as any);
+        await appendFile('id_card_photo_back', idCardBack);
       }
 
       await api.post('/register', formData, {
