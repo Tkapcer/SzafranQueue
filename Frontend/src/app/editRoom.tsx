@@ -1,18 +1,14 @@
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Switch, Alert } from 'react-native';
 
 import { Center } from '@/components/ui/center';
 import { VStack } from '@/components/ui/vstack';
-import { Heading } from '@/components/ui/heading';
-import { Text } from '@/components/ui/text';
-import { Button, ButtonText } from '@/components/ui/button';
-import { Input, InputField } from '@/components/ui/input';
+
 import { Spinner } from '@/components/ui/spinner';
-import { HStack } from '@/components/ui/hstack';
+
 
 import {
-  AppScreen, AppLoadingScreen, AppHeading, AppText, AppInput, AppButton, AppCard, AppSwitchRow,
+  AppScreen, AppHeading, AppText, AppInput, AppButton, AppCard, AppSwitchRow,
 } from '@/components/app';
 
 import { api } from '@/services/api';

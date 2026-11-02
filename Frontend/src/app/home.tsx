@@ -109,8 +109,8 @@ export default function HomeScreen() {
   const filteredRooms = rooms.filter((room) => room.is_open || isManager);
 
   return (
-    <AppScreen>
-      <AppHeading className="mb-8">Profile</AppHeading>
+    <AppScreen variant="list">
+      <AppHeading className="mb-8 text-center">Profile</AppHeading>
 
       {user ? (
         <AppCard className="items-center p-5 mb-10" space="xs">
@@ -124,11 +124,14 @@ export default function HomeScreen() {
       )}
 
       {isManager && (
-        <AppButton
-          title="Add new room"
-          className="w-full mb-4"
-          onPress={() => router.push({ pathname: '/editRoom', params: { action: 'new' } })}
-        />
+        <>
+          <AppButton
+            title="Users"
+            variant="secondary"
+            className="w-full mb-4"
+            onPress={() => router.push('/users')}
+          />
+        </>
       )}
 
       <AppCard className="flex-1 min-h-0 mb-6 overflow-hidden">
@@ -137,7 +140,7 @@ export default function HomeScreen() {
           <AppText variant="bold" className="flex-1">Room</AppText>
           <AppText variant="bold" className="w-20">Piano</AppText>
           {isManager && <AppText variant="bold" className="w-20">Status</AppText>}
-          {isManager && <Box className="w-20" />}
+          {isManager ? <Box className="w-20" /> : <Box className="w-28" />}
         </AppRow>
 
         {/* Wiersze / ładowanie / brak sal */}
@@ -148,7 +151,7 @@ export default function HomeScreen() {
         ) : filteredRooms.length === 0 ? (
           <AppText variant="muted" className="p-4 text-center">No rooms available.</AppText>
         ) : (
-          <ScrollView>
+          <ScrollView className="flex-1">
             {filteredRooms.map((room, index) => (
               <AppRow key={room.id} divider={index > 0 ? 'top' : 'none'}>
                 <AppText className="flex-1">{room.number}</AppText>
@@ -175,6 +178,16 @@ export default function HomeScreen() {
         )}
       </AppCard>
 
+      {isManager && (
+        <>
+          <AppButton
+            title="Add new room"
+            className="w-full mb-3"
+            onPress={() => router.push({ pathname: '/editRoom', params: { action: 'new' } })}
+          />
+        </>
+      )}
+      
       <AppButton title="Log out" variant="secondary" onPress={onLogout} />
     </AppScreen>
   );

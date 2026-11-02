@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ApiAuthController;
 use App\Http\Controllers\RoomController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 // Trasy publiczne (nie wymagają tokenu)
@@ -13,6 +14,7 @@ Route::post('/register', [ApiAuthController::class, 'register']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [ApiAuthController::class, 'logout']);
     Route::apiResource('rooms', RoomController::class);
+    Route::apiResource('users', UserController::class);
 });
 
 Route::get('/ping', function () {
