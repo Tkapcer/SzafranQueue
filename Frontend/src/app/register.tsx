@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
-import { Alert, View, Linking } from 'react-native';
+import { Alert, View, Linking, Platform } from 'react-native';
 
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
@@ -140,11 +140,22 @@ export default function RegisterScreen() {
       formData.append('password', password);
       formData.append('role_id', selectedRoleId);
 
+      // Inne pakowanie pliku dla Web, inne dla Mobile
+      const appendFile = async (key: string, file: FileAsset) => {
+        if (Platform.OS === 'web') {
+          const response = await fetch(file.uri);
+          const blob = await response.blob();
+          formData.append(key, blob, file.name);
+        } else {
+          formData.append(key, file as any);
+        }
+      };
+
       if (idCardFront) {
-        formData.append('id_card_photo_front', idCardFront as any);
+        await appendFile('id_card_photo_front', idCardFront);
       }
       if (idCardBack) {
-        formData.append('id_card_photo_back', idCardBack as any);
+        await appendFile('id_card_photo_back', idCardBack);
       }
 
       await api.post('/register', formData, {
@@ -173,14 +184,25 @@ export default function RegisterScreen() {
     }
 
     if (!(idCardFront || idCardBack)) {
-      Alert.alert(
-          'No ID photos selected',
-          'If you register without ID photos, you will need to visit the porter in person to verify your account. Do you want to continue?',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Continue', onPress: () => submitRegistration() }
-          ]
-      );
+      if (Platform.OS === 'web') {
+        // Natywne okienko przeglądarki
+        const userConfirmed = window.confirm(
+            "No ID photos selected\n\nIf you register without ID photos, you will need to visit the porter in person to verify your account. Do you want to continue?"
+        );
+        if (userConfirmed) {
+          submitRegistration();
+        }
+      } else {
+        // Okienko dla iOS / Android
+        Alert.alert(
+            'No ID photos selected',
+            'If you register without ID photos, you will need to visit the porter in person to verify your account. Do you want to continue?',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Continue', onPress: () => submitRegistration() }
+            ]
+        );
+      }
     } else {
       submitRegistration();
     }
