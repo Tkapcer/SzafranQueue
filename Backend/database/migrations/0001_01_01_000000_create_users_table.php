@@ -45,6 +45,19 @@ return new class extends Migration
             $table->boolean('is_open')->default(false);
             $table->dateTime('entry_time')->nullable();
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('pending_user_id')->nullable()->constrained('users')->onDelete('set null');
+            $table->dateTime('pending_until')->nullable();
+            $table->enum('status', ['free', 'pending', 'occupied'])->default('free');
+        });
+
+        Schema::create('queue_entries', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->boolean('requires_piano')->default(false);
+            $table->enum('priority_level', ['1', '2', '3'])->default('3'); // 1 - wykładowca, 2 - wyproszony student, 3 - student
+            $table->enum('status', ['waiting', 'offered', 'completed'])->default('waiting'); // 'waiting' - czeka, 'offered' - ma salę, ale jeszcze nie wszedł, 'completed' - wyszedł
+            $table->dateTime('offered_at')->nullable(); // czas, kiedy otrzymał ofertę wejścia
+            $table->dateTime('created_at')->useCurrent(); // czas dodania do kolejki
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
