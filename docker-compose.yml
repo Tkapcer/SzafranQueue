@@ -8,7 +8,7 @@ services:
     env_file:
       - .env
     ports:
-      - "${POSTGRES_PORT}:5432"
+      - "${EXTERNAL_POSTGRES_PORT}:${POSTGRES_PORT}"
     volumes:
       - db_data:/var/lib/postgresql/data
 
@@ -25,13 +25,23 @@ services:
     volumes:
       - ./backend:/var/www/html
       - ./.env:/var/www/html/.env
+      - app_flags:/var/flags
     # Instaluje paczki, robi migracje i odpala serwer na host 0.0.0.0
     command: >
       sh -c "
-      composer install;
+      if [ ! -d vendor ]; then composer install; fi;
       if ! grep -q '^APP_KEY=base64' .env; then php artisan key:generate; fi;
-      php artisan migrate:refresh --seed;
+      
+      php artisan migrate --force;
+      
+      if [ ! -f /var/flags/.seeded ]; then 
+          echo 'Uruchamianie seederów po raz pierwszy...';
+          php artisan db:seed --force;
+          touch /var/flags/.seeded; 
+      fi;
+      
       php artisan serve --host=0.0.0.0 --port=8000"
 
 volumes:
   db_data:
+  app_flags:
