@@ -1,8 +1,10 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
 import { storage } from './storage';
+import Constants from 'expo-constants';
 
-const DEV_IP = process.env.EXPO_PUBLIC_DEV_IP || 'localhost';
+const debuggerHost = Constants.expoConfig?.hostUri;
+const DEV_IP = debuggerHost?.split(':')[0];
 
 const BASE_URL = Platform.OS === 'web' 
   ? 'http://127.0.0.1:8000/api' 

@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: my_postgres
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: my_laravel
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    volumes:
+      - ./backend:/var/www/html
+      - ./.env:/var/www/html/.env
+    # Instaluje paczki, robi migracje i odpala serwer na host 0.0.0.0
+    command: >
+      sh -c "
+      composer install;
+      if ! grep -q '^APP_KEY=base64' .env; then php artisan key:generate; fi;
+      php artisan migrate:refresh --seed;
+      php artisan serve --host=0.0.0.0 --port=8000"
+
+volumes:
+  db_data:
