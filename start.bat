@@ -15,6 +15,8 @@ echo Otwieranie logow w nowym oknie...
 start "Logi Backend" cmd /k "docker-compose logs -f backend"
 
 :: --- 2. FRONTEND (EXPO) ---
+cd frontend
+
 echo Aktualizacja zaleznosci frontendu (npm install)...
 call npm install
 
