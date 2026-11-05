@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -13,12 +12,27 @@ class Room extends Model
         'number',
         'has_piano',
         'is_open',
-        'entry_time',
-        'user_id',
+        'status',          // 'free' - dostępna, 'pending' - zaproponowana, oczekuje na potwierdzenie, 'occupied' - zajęta
+        'user_id',         // ID osoby aktualnie ćwiczącej
+        'entry_time',      // czas rozpoczęcia ćwiczeń
+        'pending_user_id', // ID osoby, która ma ofertę wejścia
+        'pending_until',   // czas wygaśnięcia oferty
     ];
 
     protected $casts = [
         'has_piano' => 'boolean',
         'is_open' => 'boolean',
+        'entry_time' => 'datetime',
+        'pending_until' => 'datetime',
     ];
+
+    public function currentUser()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function pendingUser()
+    {
+        return $this->belongsTo(User::class, 'pending_user_id');
+    }
 }
