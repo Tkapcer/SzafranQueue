@@ -1,3 +1,4 @@
+import { ComponentRef, forwardRef } from 'react';
 import {
   Select,
   SelectTrigger,
@@ -21,24 +22,26 @@ type Props = {
   placeholder?: string;
 };
 
-export function AppSelect({ value, onChange, options, placeholder }: Props) {
-  return (
-    <Select selectedValue={value} onValueChange={onChange}>
-      <SelectTrigger variant="outline" size="md" className="h-12 rounded-lg justify-between border border-input">
-        <SelectInput placeholder={placeholder} className="text-foreground" />
-        <SelectIcon className="mr-3" as={ChevronDownIcon} />
-      </SelectTrigger>
-      <SelectPortal>
-        <SelectBackdrop />
-        <SelectContent className="bg-background">
-          <SelectDragIndicatorWrapper>
-            <SelectDragIndicator />
-          </SelectDragIndicatorWrapper>
-          {options.map((o) => (
-            <SelectItem key={o.value} label={o.label} value={o.value} className="text-foreground" />
-          ))}
-        </SelectContent>
-      </SelectPortal>
-    </Select>
-  );
-}
+export const AppSelect = forwardRef<ComponentRef<typeof SelectTrigger>, Props>(
+  function AppSelect({ value, onChange, options, placeholder }, ref) {
+    return (
+      <Select selectedValue={value} onValueChange={onChange}>
+        <SelectTrigger ref={ref} variant="outline" size="md" className="h-12 rounded-lg justify-between border border-input">
+          <SelectInput placeholder={placeholder} className="text-foreground" />
+          <SelectIcon className="mr-3" as={ChevronDownIcon} />
+        </SelectTrigger>
+        <SelectPortal>
+          <SelectBackdrop />
+          <SelectContent className="bg-background">
+            <SelectDragIndicatorWrapper>
+              <SelectDragIndicator />
+            </SelectDragIndicatorWrapper>
+            {options.map((o) => (
+              <SelectItem key={o.value} label={o.label} value={o.value} className="text-foreground" />
+            ))}
+          </SelectContent>
+        </SelectPortal>
+      </Select>
+    );
+  }
+);
