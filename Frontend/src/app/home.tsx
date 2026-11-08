@@ -39,6 +39,8 @@ export default function HomeScreen() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [isRoomsLoading, setIsRoomsLoading] = useState(true);
 
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   // useEffect wykona się raz, od razu po załadowaniu ekranu[cite: 3]
   useEffect(() => {
     const loadData = async () => {
@@ -65,8 +67,14 @@ export default function HomeScreen() {
   }, []);
 
   const onLogout = async () => {
+    // Blokujemy kolejne kliknięcia, jeśli wylogowywanie już trwa
+    if (isLoggingOut) return;
+
     try {
+      setIsLoggingOut(true);
+      
       const token = await storage.getItem('userToken');
+
       if (token) {
         await api.post('/logout', {}, {
           headers: { Authorization: `Bearer ${token}` }
@@ -75,10 +83,10 @@ export default function HomeScreen() {
     } catch (error) {
       console.log('Error logging out:', error);
     } finally {
-      // Usuwamy zarówno token, jak i dane użytkownika z pamięci![cite: 3]
       await storage.deleteItem('userToken');
       await storage.deleteItem('userData');
-      
+
+      setIsLoggingOut(false);
       router.replace('/');
     }
   };
@@ -187,8 +195,13 @@ export default function HomeScreen() {
           />
         </>
       )}
-      
-      <AppButton title="Log out" variant="secondary" onPress={onLogout} />
+
+      <AppButton
+          title="Log out"
+          variant="secondary"
+          loading={isLoggingOut}
+          onPress={onLogout}
+      />
     </AppScreen>
   );
 }

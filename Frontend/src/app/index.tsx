@@ -1,5 +1,5 @@
 import { useRouter, useLocalSearchParams } from 'expo-router'; // nawigacja między ekranami
-import { useState } from 'react'; // hook trzyma dane i po zmianie odświeżają ekran
+import {useEffect, useState} from 'react'; // hook trzyma dane i po zmianie odświeżają ekran
 
 import { AppScreen, AppHeading, AppText, AppInput, AppButton, AppLink } from '@/components/app';
 
@@ -8,6 +8,16 @@ import { api } from '@/services/api'; // Upewnij się, że ścieżka do Twojej k
 
 export default function LoginScreen() {
   const router = useRouter(); // hook do nawigacji między ekranami
+  
+  useEffect(() => {
+    const checkExistingSession = async () => {
+      const token = await storage.getItem('userToken');
+      if (token) {
+        router.replace('/home');
+      }
+    };
+    checkExistingSession();
+  }, []);
   const [email, setEmail] = useState(''); // email to aktualna wartość, setEmail do zmiany, '' wartość początkowa
   const [password, setPassword] = useState(''); // analogicznie
   const { registered } = useLocalSearchParams<{ registered?: string }>()
