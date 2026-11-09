@@ -47,6 +47,27 @@ Jeśli chcesz wprowadzić swoje ustawienia dla bazy danych (np. hasło) lub spos
 
 Na końcu w terminalu pojawi się duży kod QR. Zeskanuj go aplikacją **Expo Go** na swoim telefonie, aby otworzyć aplikację!
 
+## Adres aplikacji
+
+- **Backend (API):** Aplikacja serwerowa działa lokalnie pod adresem `http://localhost:8000`
+- **Frontend (Aplikacja mobilna):** Dostępna na urządzeniu mobilnym po zeskanowaniu kodu QR w aplikacji Expo Go (łączy się z backendem w ramach tej samej sieci lokalnej).
+
+---
+
+## Opis endpointu
+
+Aplikacja posiada publiczny endpoint sprawdzający, czy serwer funkcjonuje poprawnie (status aplikacji). Endpoint ten jest dostępny bez logowania i nie wymaga żadnej autoryzacji.
+
+- **Ścieżka:** `/api/health`
+- **Metoda HTTP:** `GET`
+- **Oczekiwany kod odpowiedzi:** `200 OK`
+
+**Zwracany plik JSON:**
+```json
+{
+  "status": "ok"
+}
+```
 
 ## Przydatne komendy i rozwiązywanie problemów
 
