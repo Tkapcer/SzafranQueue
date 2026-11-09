@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ComponentRef, useRef } from 'react';
 import { Alert, View, Linking, Platform } from 'react-native';
 
 import * as ImagePicker from 'expo-image-picker';
@@ -37,6 +37,11 @@ export default function RegisterScreen() {
 
   const [idCardFront, setIdCardFront] = useState<FileAsset | null>(null);
   const [idCardBack, setIdCardBack] = useState<FileAsset | null>(null);
+
+  // uchwyty do kolejnych pól, aby móc ustawić fokus po wciśnięciu "next" na polu email
+  const passwordInputRef = useRef<ComponentRef<typeof AppInput>>(null);
+  const surnameInputRef = useRef<ComponentRef<typeof AppInput>>(null);
+  const roleSelectRef = useRef<ComponentRef<typeof AppSelect>>(null);
 
   useEffect(() => {
     api.get('/roles')
@@ -214,10 +219,25 @@ export default function RegisterScreen() {
 
       {errorMessage ? <AppText variant="error" className="mb-2.5">{errorMessage}</AppText> : null}
 
-      <AppInput placeholder="Name" value={name} onChangeText={setName} />
-      <AppInput placeholder="Surname" value={surname} onChangeText={setSurname} />
-
+      <AppInput 
+        placeholder="Name" 
+        returnKeyType="next"
+        submitBehavior="submit"
+        value={name} 
+        onChangeText={setName} 
+        onSubmitEditing={() => (surnameInputRef.current as any)?.focus()}
+        />
+      <AppInput 
+        ref={surnameInputRef}
+        placeholder="Surname" 
+        value={surname} 
+        onChangeText={setSurname} 
+        returnKeyType="next"
+        submitBehavior="submit"
+        onSubmitEditing={() => (roleSelectRef.current as any)?.focus()}
+        />
       <AppSelect
+        ref={roleSelectRef}
         value={selectedRoleId}
         onChange={setSelectedRoleId}
         placeholder="Select role"
@@ -249,12 +269,24 @@ export default function RegisterScreen() {
 
       <AppInput
         placeholder="Email"
+        returnKeyType="next"
+        submitBehavior="submit"
+        onSubmitEditing={() => (passwordInputRef.current as any)?.focus()}
         autoCapitalize="none"
         keyboardType="email-address"
         value={email}
         onChangeText={setEmail}
       />
-      <AppInput placeholder="Password" secureTextEntry value={password} onChangeText={setPassword} />
+      <AppInput 
+        ref={passwordInputRef}
+        placeholder="Password" 
+        secureTextEntry 
+        value={password} 
+        onChangeText={setPassword} 
+        returnKeyType="done"
+        submitBehavior="submit"
+        onSubmitEditing={onRegister}
+      />
 
       <AppButton title="Register" variant="secondary" loading={isLoading} onPress={onRegister} />
       <AppLink title="Log in" onPress={() => router.replace('/')} />

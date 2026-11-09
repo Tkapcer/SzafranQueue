@@ -1,5 +1,6 @@
 import { useRouter, useLocalSearchParams } from 'expo-router'; // nawigacja między ekranami
 import {useEffect, useState} from 'react'; // hook trzyma dane i po zmianie odświeżają ekran
+import { ComponentRef, useRef } from 'react';
 
 import { AppScreen, AppHeading, AppText, AppInput, AppButton, AppLink } from '@/components/app';
 
@@ -8,7 +9,8 @@ import { api } from '@/services/api'; // Upewnij się, że ścieżka do Twojej k
 
 export default function LoginScreen() {
   const router = useRouter(); // hook do nawigacji między ekranami
-  
+  const passwordInputRef = useRef<ComponentRef<typeof AppInput>>(null); // referencja do pola hasła, aby móc ustawić fokus po wciśnięciu "next" na polu email
+
   useEffect(() => {
     const checkExistingSession = async () => {
       const token = await storage.getItem('userToken');
@@ -79,10 +81,21 @@ export default function LoginScreen() {
         placeholder="Email"
         autoCapitalize="none"
         keyboardType="email-address"
+        returnKeyType="next"
+        submitBehavior="submit"
         value={email}
         onChangeText={setEmail}
+        onSubmitEditing={() => (passwordInputRef.current as any)?.focus()}
       />
-      <AppInput placeholder="Password" secureTextEntry value={password} onChangeText={setPassword} />
+      <AppInput
+        ref={passwordInputRef}
+        placeholder="Password"
+        secureTextEntry
+        returnKeyType="done"
+        value={password}
+        onChangeText={setPassword}
+        onSubmitEditing={onLogin}
+      />
 
       <AppButton title="Log in" variant="secondary" loading={isLoading} onPress={onLogin} />
       <AppLink title="Register" onPress={() => router.push('/register')} />
