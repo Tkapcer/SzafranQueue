@@ -28,6 +28,7 @@ interface Room {
   number: string;
   has_piano: boolean;
   is_open: boolean;
+  status: string;
 }
 
 export default function HomeScreen() {
@@ -115,6 +116,8 @@ export default function HomeScreen() {
 
   // Zamknięte sale widzi tylko portier
   const filteredRooms = rooms.filter((room) => room.is_open || isManager);
+  const isAnyFree = filteredRooms.some((room) => room.status === "free");
+  const isAnyOpen = filteredRooms.some((room) => room.is_open);
 
   return (
     <AppScreen variant="list">
@@ -138,6 +141,17 @@ export default function HomeScreen() {
             variant="secondary"
             className="w-full mb-4"
             onPress={() => router.push('/users')}
+          />
+        </>
+      )}
+
+      {!isManager && !isAnyFree && isAnyOpen && (
+        <>
+          <AppButton
+            title="Join the queue"
+            variant="secondary"
+            className="w-full mb-4"
+            onPress={/*TODO*/ () => console.log('Join the queue')}
           />
         </>
       )}
@@ -178,7 +192,7 @@ export default function HomeScreen() {
                     onPress={() => router.push({ pathname: '/editRoom', params: { action: 'edit', id: room.id } })}
                   />
                 ) : (
-                  <AppButton title="Book" size="sm" className="w-28" onPress={() => onReserve(room.id)} />
+                  (room.status==="free" ? <AppButton title="Book" size="sm" className="w-28" onPress={() => onReserve(room.id)} /> : "")
                 )}
               </AppRow>
             ))}
