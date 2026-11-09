@@ -50,7 +50,9 @@ Na końcu w terminalu pojawi się duży kod QR. Zeskanuj go aplikacją **Expo Go
 ## Adres aplikacji
 
 - **Backend (API):** Aplikacja serwerowa działa lokalnie pod adresem `http://localhost:8000`
-- **Frontend (Aplikacja mobilna):** Dostępna na urządzeniu mobilnym po zeskanowaniu kodu QR w aplikacji Expo Go (łączy się z backendem w ramach tej samej sieci lokalnej).
+- **Frontend:** 
+  - Dostępna na urządzeniu mobilnym po zeskanowaniu kodu QR w aplikacji Expo Go.
+  - Wersja przeglądarkowa dostępna pod adresem `http://localhost:8081`
 
 ---
 
