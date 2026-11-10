@@ -36,7 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
-Route::get('/ping', function () {
+Route::get('/health', function () {
     return response()->json([
         'status' => 'ok',
         'message' => 'Backend Laravel działa poprawnie!'
