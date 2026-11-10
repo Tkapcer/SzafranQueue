@@ -48,6 +48,7 @@ return new class extends Migration
             $table->foreignId('pending_user_id')->nullable()->constrained('users')->onDelete('set null');
             $table->dateTime('pending_until')->nullable();
             $table->enum('status', ['free', 'pending', 'occupied'])->default('free');
+            $table->timestamp('last_heartbeat_at')->nullable();
         });
 
         Schema::create('queue_entries', function (Blueprint $table) {

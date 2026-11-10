@@ -1,5 +1,7 @@
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { storage } from '@/services/storage';
+import { AppLoadingScreen } from '@/components/app';
 
 import { Center } from '@/components/ui/center';
 import { VStack } from '@/components/ui/vstack';
@@ -16,6 +18,9 @@ import { api } from '@/services/api';
 export default function EditRoomScreen() {
   const router = useRouter();
   const { action, id } = useLocalSearchParams<{ action: string; id?: string }>();
+  
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   const isEditMode = action === 'edit';
 
@@ -26,6 +31,34 @@ export default function EditRoomScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(isEditMode);
   const [errorMessage, setErrorMessage] = useState('');
+
+  // 1. Sprawdzenie roli użytkownika
+  useEffect(() => {
+    const checkRole = async () => {
+      try {
+        const userDataStr = await storage.getItem('userData');
+        if (!userDataStr) {
+          router.replace('/');
+          return;
+        }
+
+        const user = JSON.parse(userDataStr);
+        if (user.role_id !== 1) {
+          // Użytkownik nie jest portierem -> cofnij go
+          router.replace('/home');
+          return;
+        }
+
+        setIsAuthorized(true);
+      } catch (e) {
+        router.replace('/home');
+      } finally {
+        setCheckingAuth(false);
+      }
+    };
+
+    checkRole();
+  }, []);
 
   // Pobierz dane sali, jeśli jesteśmy w trybie edycji
   useEffect(() => {
@@ -48,6 +81,11 @@ export default function EditRoomScreen() {
       fetchRoom();
     }
   }, [isEditMode, id]);
+
+  // Dopóki trwa weryfikacja lub brak autoryzacji, nie renderujemy formularza
+  if (checkingAuth || !isAuthorized) {
+    return <AppLoadingScreen />;
+  }
 
   const handleSave = async () => {
     if (!number.trim()) {

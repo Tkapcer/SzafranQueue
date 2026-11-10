@@ -6,15 +6,15 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 
 import { api } from '@/services/api';
+import { storage } from '@/services/storage';
 import {
-  AppScreen, AppHeading, AppText, AppInput, AppSelect, AppButton, AppLink,
+  AppScreen, AppHeading, AppText, AppInput, AppSelect, AppButton, AppLink, AppLoadingScreen,
 } from '@/components/app';
-
 
 type FileAsset = {
   uri: string;
   name: string;
-  type: string
+  type: string;
 };
 
 interface Role {
@@ -25,6 +25,10 @@ interface Role {
 
 export default function RegisterScreen() {
   const router = useRouter();
+
+  // 1. Sprawdzenie czy gość nie jest przypadkiem zalogowany
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
   const [name, setName] = useState('');
   const [surname, setSurname] = useState('');
   const [email, setEmail] = useState('');
@@ -38,31 +42,49 @@ export default function RegisterScreen() {
   const [idCardFront, setIdCardFront] = useState<FileAsset | null>(null);
   const [idCardBack, setIdCardBack] = useState<FileAsset | null>(null);
 
-  // uchwyty do kolejnych pól, aby móc ustawić fokus po wciśnięciu "next" na polu email
   const passwordInputRef = useRef<ComponentRef<typeof AppInput>>(null);
   const surnameInputRef = useRef<ComponentRef<typeof AppInput>>(null);
   const roleSelectRef = useRef<ComponentRef<typeof AppSelect>>(null);
 
+  // 2. Jeśli zalogowany -> odeślij do /home
   useEffect(() => {
-    api.get('/roles')
-        .then((res) => {
-          const data = res.data?.data ?? res.data;
-          setRoles(Array.isArray(data) ? data : []);
-        })
-        .catch((err) => console.error('Error fetching roles:', err));
+    const checkLoggedIn = async () => {
+      try {
+        const token = await storage.getItem('userToken');
+        if (token) {
+          router.replace('/home');
+          return;
+        }
+      } catch (e) {
+        // Ignoruj błąd odczytu
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkLoggedIn();
   }, []);
 
-  // Zrobienie zdjęcia aparatem
+  // 3. Pobranie dostępnych ról do rejestracji
+  useEffect(() => {
+    api.get('/roles')
+      .then((res) => {
+        const data = res.data?.data ?? res.data;
+        setRoles(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => console.error('Error fetching roles:', err));
+  }, []);
+
   const handleCamera = async (side: 'front' | 'back') => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert(
-          'Permission Denied',
-          'Camera access has been blocked. Please go to device settings to enable it.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Settings', onPress: () => Linking.openSettings() }
-          ]
+        'Permission Denied',
+        'Camera access has been blocked. Please go to device settings to enable it.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Settings', onPress: () => Linking.openSettings() }
+        ]
       );
       return;
     }
@@ -86,9 +108,8 @@ export default function RegisterScreen() {
 
       side === 'front' ? setIdCardFront(file) : setIdCardBack(file);
     }
-  }
+  };
 
-  // Wybór z galerii
   const handleGallery = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -113,10 +134,9 @@ export default function RegisterScreen() {
     }
   };
 
-  // Wybór pliku z menedżera plików
   const handleDocument = async (side: 'front' | 'back') => {
     const result = await DocumentPicker.getDocumentAsync({
-      type: ['application/pdf', 'image/*'] // Pozwala wybrać tylko PDF i zdjęcia
+      type: ['application/pdf', 'image/*']
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
@@ -125,14 +145,13 @@ export default function RegisterScreen() {
       const file = {
         uri: asset.uri,
         name: asset.name,
-        type: asset.mimeType || 'application/pdf' // Domyślnie PDF, jeśli system nie poda
+        type: asset.mimeType || 'application/pdf'
       };
 
       side === 'front' ? setIdCardFront(file) : setIdCardBack(file);
     }
   };
 
-  // Wydzielona logika samej wysyłki na serwer
   const submitRegistration = async () => {
     try {
       setIsLoading(true);
@@ -145,7 +164,6 @@ export default function RegisterScreen() {
       formData.append('password', password);
       formData.append('role_id', selectedRoleId);
 
-      // Inne pakowanie pliku dla Web, inne dla Mobile
       const appendFile = async (key: string, file: FileAsset) => {
         if (Platform.OS === 'web') {
           const response = await fetch(file.uri);
@@ -168,7 +186,6 @@ export default function RegisterScreen() {
       });
 
       router.replace({ pathname: '/', params: { registered: 'true' } });
-
     } catch (error: any) {
       if (error.response?.data?.errors) {
         const firstKey = Object.keys(error.response.data.errors)[0];
@@ -181,7 +198,6 @@ export default function RegisterScreen() {
     }
   };
 
-  // Funkcja wywoływana po kliknięciu przycisku Register
   const onRegister = () => {
     if (!name || !surname || !email || !password || !selectedRoleId) {
       setErrorMessage('All fields are required.');
@@ -190,28 +206,31 @@ export default function RegisterScreen() {
 
     if (!(idCardFront || idCardBack)) {
       if (Platform.OS === 'web') {
-        // Natywne okienko przeglądarki
         const userConfirmed = window.confirm(
-            "No ID photos selected\n\nIf you register without ID photos, you will need to visit the porter in person to verify your account. Do you want to continue?"
+          "No ID photos selected\n\nIf you register without ID photos, you will need to visit the porter in person to verify your account. Do you want to continue?"
         );
         if (userConfirmed) {
           submitRegistration();
         }
       } else {
-        // Okienko dla iOS / Android
         Alert.alert(
-            'No ID photos selected',
-            'If you register without ID photos, you will need to visit the porter in person to verify your account. Do you want to continue?',
-            [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Continue', onPress: () => submitRegistration() }
-            ]
+          'No ID photos selected',
+          'If you register without ID photos, you will need to visit the porter in person to verify your account. Do you want to continue?',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Continue', onPress: () => submitRegistration() }
+          ]
         );
       }
     } else {
       submitRegistration();
     }
   };
+
+  // 4. Wczesne wyjście w trakcie weryfikacji sesji
+  if (isCheckingAuth) {
+    return <AppLoadingScreen />;
+  }
 
   return (
     <AppScreen variant="form">
@@ -226,7 +245,7 @@ export default function RegisterScreen() {
         value={name} 
         onChangeText={setName} 
         onSubmitEditing={() => (surnameInputRef.current as any)?.focus()}
-        />
+      />
       <AppInput 
         ref={surnameInputRef}
         placeholder="Surname" 
@@ -235,7 +254,7 @@ export default function RegisterScreen() {
         returnKeyType="next"
         submitBehavior="submit"
         onSubmitEditing={() => (roleSelectRef.current as any)?.focus()}
-        />
+      />
       <AppSelect
         ref={roleSelectRef}
         value={selectedRoleId}
@@ -244,7 +263,6 @@ export default function RegisterScreen() {
         options={roles.map((r) => ({ label: r.alias || r.name, value: r.id.toString() }))}
       />
 
-      {/* Zdjęcia legitymacji */}
       <View className="mb-4 p-3 border border-input rounded-lg gap-2">
         <AppText className="text-center font-bold">ID photos</AppText>
 
