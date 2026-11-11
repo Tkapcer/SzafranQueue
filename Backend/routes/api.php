@@ -31,10 +31,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/rooms/{room}', [RoomController::class, 'update']);
         Route::delete('/rooms/{room}', [RoomController::class, 'destroy']);
 
+        Route::get('/users/pending', [UserController::class, 'pending']);
+        Route::post('/users/{user}/approve', [UserController::class, 'approve']);
+        Route::post('/users/{user}/reject', [UserController::class, 'reject']);
         // Pełny CRUD użytkowników (index, store, show, update, destroy) wewnątrz managera
         Route::apiResource('users', UserController::class);
     });
 });
+
+Route::get('/id-cards/{path}', [UserController::class, 'idCard'])
+    ->middleware('signed')
+    ->name('id-card.show');
 
 Route::get('/health', function () {
     return response()->json([

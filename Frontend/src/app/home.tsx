@@ -147,6 +147,15 @@ export default function HomeScreen() {
         />
       )}
 
+      {isManager && (
+        <AppButton
+          title="Pending Users"
+          variant="secondary"
+          className="w-full mb-4"
+          onPress={() => router.push('/pendingUsers')}
+        />
+      )}
+
       {!isManager && !isAnyFree && isAnyOpen && (
         <AppButton
           title="Join the queue"

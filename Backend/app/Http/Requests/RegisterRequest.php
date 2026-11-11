@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Http\UploadedFile;
 
 class RegisterRequest extends FormRequest
 {
@@ -33,9 +34,23 @@ class RegisterRequest extends FormRequest
                 Rule::exists('roles', 'id')->where('is_selectable', true),
                 ],
             'password' => 'required|min:8',
-            'id_card_photo_front' => 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:5120',
-            'id_card_photo_back' => 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:5120',
+            'id_card_photo_front' => 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:5120|required_with:id_card_photo_back',
+            'id_card_photo_back' => [
+                Rule::requiredIf(fn () => $this->frontIsImage()),
+                'nullable',
+                'image',
+                'mimes:jpeg,png,jpg,webp',
+                'max:5120',
+            ],
         ];
+    }
+
+    private function frontIsImage(): bool
+    {
+        $front = $this->file('id_card_photo_front');
+
+        return $front instanceof UploadedFile
+            && $front->getMimeType() !== 'application/pdf';
     }
 
     public function messages(): array
@@ -55,12 +70,14 @@ class RegisterRequest extends FormRequest
             'role_id.exists' => 'Invalid role',
             'password.required' => 'Password is required',
             'password.min' => 'Password must be at least 8 characters',
-            'id_card_photo_front_path.file' => 'ID card photo front must be a file',
-            'id_card_photo_front_path.mimes' => 'ID card photo front must be a JPEG, PNG, JPG, WEBP, or PDF file',
-            'id_card_photo_front_path.max' => 'ID card photo front cannot exceed 5MB',
-            'id_card_photo_back_path.file' => 'ID card photo back must be a file',
-            'id_card_photo_back_path.mimes' => 'ID card photo back must be a JPEG, PNG, JPG, WEBP, or PDF file',
-            'id_card_photo_back_path.max' => 'ID card photo back cannot exceed 5MB',
+            'id_card_photo_front.file' => 'ID card photo front must be a file',
+            'id_card_photo_front.mimes' => 'ID card photo front must be a JPEG, PNG, JPG, WEBP, or PDF file',
+            'id_card_photo_front.max' => 'ID card photo front cannot exceed 5MB',
+            'id_card_photo_back.file' => 'ID card photo back must be a file',
+            'id_card_photo_back.mimes' => 'ID card photo back must be a JPEG, PNG, JPG, WEBP, or PDF file',
+            'id_card_photo_back.max' => 'ID card photo back cannot exceed 5MB',
+            'id_card_photo_back.required' => 'Back of the ID card is required when the front is a photo',
+            'id_card_photo_front.required_with' => 'Front of the ID card is required when the back is provided',
         ];
     }
 }

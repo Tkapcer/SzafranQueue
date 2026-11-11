@@ -6,6 +6,10 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
+use App\Models\Path;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
+
 class UserController extends Controller
 {
     // Pobieranie listy użytkowników
@@ -80,5 +84,53 @@ class UserController extends Controller
         return response()->json([
             'message' => 'User deleted successfully.'
         ]);
+    }
+
+    // Pobieranie listy użytkowników oczekujących na zatwierdzenie
+    public function pending()
+    {
+        return User::where('is_approved', false)
+            ->where('role_id', '!=', 1)
+            ->with('paths')
+            ->get()
+            ->map(fn ($u) => [
+                'id' => $u->id,
+                'name' => $u->name,
+                'surname' => $u->surname,
+                'email' => $u->email,
+                'documents' => $u->paths->map(fn ($p) => [
+                    'id' => $p->id,
+                    'is_pdf' => str_ends_with(strtolower($p->id_card_path), '.pdf'),
+                    'url' => URL::temporarySignedRoute(
+                        'id-card.show', now()->addMinutes(10), ['path' => $p->id]
+                    ),
+                ])->values(),
+            ]);
+    }
+
+    // Pobieranie zdjęcia legitymacji
+    public function idCard(Path $path)
+    {
+        abort_unless(Storage::exists($path->id_card_path), 404);
+        return Storage::response($path->id_card_path);
+    }
+
+    // Zatwierdzanie użytkownika
+    public function approve(User $user)
+    {
+        $user->update(['is_approved' => true]);
+        return response()->json(['message' => 'ok']);
+    }
+
+    // Odrzucanie użytkownika
+    public function reject(User $user)
+    {
+        foreach ($user->paths as $p) {
+            Storage::delete($p->id_card_path);
+        }
+        $user->paths()->delete();
+        $user->delete();
+
+        return response()->json(['message' => 'ok']);
     }
 }

@@ -29,21 +29,26 @@ class ApiAuthController extends Controller
         // 3. Weryfikacja hasła (bcrypt)
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
-                'message' => 'Nieprawidłowy adres email lub hasło.'
+                'message' => 'Invalid credentials.'
             ], 401);
         }
 
         // 4. Sprawdzenie, czy konto jest zatwierdzone (Twoja kolumna is_approved)
         if (!$user->is_approved) {
             return response()->json([
-                'message' => 'Twoje konto oczekuje na zatwierdzenie przez administratora.'
+                'message' => 'Your account is pending approval by an administrator.'
             ], 403);
         }
 
-        // 5. Wygenerowanie tokena Sanctum
+        // 5. Sprawdzenie, czy konto jest aktywne (Twoja kolumna is_active)
+        if (!$user->is_active) {
+            return response()->json(['message' => 'Account is not active.'], 403);
+        }
+
+        // 6. Wygenerowanie tokena Sanctum
         $token = $user->createToken('mobile-device')->plainTextToken;
 
-        // 6. Zwrócenie odpowiedzi dla React Native
+        // 7. Zwrócenie odpowiedzi dla React Native
         return response()->json([
             'token' => $token,
             'user' => $user
@@ -56,7 +61,7 @@ class ApiAuthController extends Controller
         $request->user()->currentAccessToken()->delete();
 
         return response()->json([
-            'message' => 'Wylogowano pomyślnie'
+            'message' => 'Logout successful'
         ]);
     }
 
@@ -78,6 +83,10 @@ class ApiAuthController extends Controller
 
 
             $user->role()->associate(Role::findOrFail($data['role_id']));
+
+            $user->is_approved = false;
+            $user->is_active = true;
+
             $user->save();
 
             if($request->hasFile('id_card_photo_front')) {
@@ -101,7 +110,7 @@ class ApiAuthController extends Controller
             DB::commit();
 
             return response()->json([
-                'message' => 'Rejestracja pomyślna',
+                'message' => 'Registration successful',
                 'user' => $user
             ], 201);
 
@@ -114,7 +123,7 @@ class ApiAuthController extends Controller
             }
 
             return response()->json([
-                'message' => 'Rejestracja nie powiodła się',
+                'message' => 'Registration failed',
                 'error' => $e->getMessage()     //Można by na produkcji usunąć zwracanie $e
             ], 500);
         }
