@@ -24,7 +24,7 @@ export default function CurrentRoomScreen() {
     try {
       await api.post(`/rooms/${roomId}/leave`);
     } catch (error) {
-      console.error('Błąd zwalniania sali:', error);
+      console.error('Error while leaving the room:', error);
     } finally {
       setIsLeaving(false);
       router.replace('/home');
@@ -46,14 +46,14 @@ export default function CurrentRoomScreen() {
         const room = response.data;
 
         if (room.status !== 'occupied' || room.user_id !== currentUser.id) {
-          Alert.alert('Brak dostępu', 'Nie jesteś przypisany do tej sali.');
+          Alert.alert('No access', 'You are not assigned to this room.');
           router.replace('/home');
           return;
         }
 
         setIsValidating(false);
       } catch (error) {
-        console.error('Błąd weryfikacji sali:', error);
+        console.error('Error verifying room:', error);
         router.replace('/home');
       }
     };
@@ -74,7 +74,7 @@ export default function CurrentRoomScreen() {
 
     const interval = setInterval(() => {
       api.post(`/rooms/${roomId}/heartbeat`).catch((err) => {
-        console.warn('Utracono połączenie z salą:', err);
+        console.warn('Error while sending heartbeat:', err);
       });
     }, 30000); // 30 sekund
 
@@ -88,11 +88,11 @@ export default function CurrentRoomScreen() {
     // Android: kliknięcie wstecz pyta o zwolnienie sali
     const onBackPress = () => {
       Alert.alert(
-        'Opuszczenie sali',
-        'Czy chcesz zwolnić salę i wrócić do listy?',
+        'Leaving Room',
+        'Do you want to release the room and return to the list?',
         [
-          { text: 'Zostań', style: 'cancel' },
-          { text: 'Zwolnij i wyjdź', style: 'destructive', onPress: releaseRoom },
+          { text: 'Stay', style: 'cancel' },
+          { text: 'Release and Exit', style: 'destructive', onPress: releaseRoom },
         ]
       );
       return true; // blokuje domyślne cofnięcie
@@ -107,7 +107,8 @@ export default function CurrentRoomScreen() {
     if (Platform.OS === 'web') {
       window.history.pushState(null, '', window.location.href);
       const onPopState = () => {
-        const leave = window.confirm('Czy chcesz zwolnić salę i wyjść?');
+        // Pytanie o zwolnienie sali przed wyjściem
+        const leave = window.confirm('Do you want to release the room and exit?');
         if (leave) {
           releaseRoom();
         } else {
@@ -151,18 +152,18 @@ export default function CurrentRoomScreen() {
 
   return (
     <AppScreen>
-      <AppHeading className="mb-6 text-center">Aktywna sesja</AppHeading>
+      <AppHeading className="mb-6 text-center">Active Session</AppHeading>
 
       <AppCard className="items-center p-6 mb-8" space="sm">
-        <AppText variant="muted">Aktualnie znajdujesz się w sali:</AppText>
+        <AppText variant="muted">Currently you are in the room:</AppText>
         <AppHeading className="text-primary my-2">
           {roomNumber}
         </AppHeading>
-        <AppText variant="muted">Ćwiczenia w toku</AppText>
+        <AppText variant="muted">Exercises in progress</AppText>
       </AppCard>
 
       <AppButton
-        title="Zwolnij i wyjdź z sali"
+        title="Release and Exit"
         loading={isLeaving}
         onPress={releaseRoom}
         className="w-full"
