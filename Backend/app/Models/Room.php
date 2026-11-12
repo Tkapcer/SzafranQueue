@@ -17,6 +17,7 @@ class Room extends Model
         'entry_time',      // czas rozpoczęcia ćwiczeń
         'pending_user_id', // ID osoby, która ma ofertę wejścia
         'pending_until',   // czas wygaśnięcia oferty
+        'last_heartbeat_at', // czas ostatniego sygnału aktywności
     ];
 
     protected $casts = [
@@ -24,6 +25,7 @@ class Room extends Model
         'is_open' => 'boolean',
         'entry_time' => 'datetime',
         'pending_until' => 'datetime',
+        'last_heartbeat_at' => 'datetime',
     ];
 
     public function currentUser()

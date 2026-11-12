@@ -9,6 +9,22 @@ class RoomController extends Controller
 {
     public function index(Request $request)
     {
+        Room::where('status', 'occupied')
+            ->where(function ($query) {
+                // Brak pulsu od ponad 90 sekund
+                $query->where('last_heartbeat_at', '<', now()->subSeconds(90))
+                // LUB student przekroczył limit 2 godzin
+                ->orWhere(function ($sub) {
+                    $sub->whereHas('currentUser', fn($u) => $u->where('role_id', 2))
+                        ->where('entry_time', '<', now()->subHours(2));
+                });
+            })
+            ->update([
+                'status' => 'free',
+                'user_id' => null,
+                'entry_time' => null,
+                'last_heartbeat_at' => null,
+            ]);
         $user = $request->user();
 
         // Jeśli użytkownik to portier (role_id === 1), zwracamy wszystkie sale

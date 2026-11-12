@@ -14,9 +14,11 @@ import {
   AppButton,
   AppCard,
   AppSwitchRow,
+  AppLoadingScreen,
 } from '@/components/app';
 
 import { api } from '@/services/api';
+import { storage } from '@/services/storage';
 
 interface Role {
   id: number;
@@ -34,6 +36,11 @@ export default function EditUserScreen() {
 
   const isEditMode = action === 'edit';
 
+  // 1. Autoryzacja
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  // 2. Pola formularza
   const [name, setName] = useState('');
   const [surname, setSurname] = useState('');
   const [email, setEmail] = useState('');
@@ -43,7 +50,7 @@ export default function EditUserScreen() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [selectedRoleId, setSelectedRoleId] = useState('');
 
-  // Status użytkownika
+  // Status konta
   const [isApproved, setIsApproved] = useState(false);
   const [isActive, setIsActive] = useState(true);
 
@@ -51,13 +58,41 @@ export default function EditUserScreen() {
   const [isFetching, setIsFetching] = useState(isEditMode);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Pobieranie dostępnych ról
+  // 3. Sprawdzenie uprawnień managera (role_id === 1)
   useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const userDataStr = await storage.getItem('userData');
+        if (!userDataStr) {
+          router.replace('/');
+          return;
+        }
+
+        const user = JSON.parse(userDataStr);
+        if (user.role_id !== 1) {
+          router.replace('/home');
+          return;
+        }
+
+        setIsAuthorized(true);
+      } catch (error) {
+        router.replace('/home');
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  // 4. Pobieranie ról (tylko jeśli zautoryzowany)
+  useEffect(() => {
+    if (!isAuthorized) return;
+
     const fetchRoles = async () => {
       try {
         const response = await api.get('/roles');
         const data = response.data?.data ?? response.data;
-
         setRoles(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error('Error fetching roles:', error);
@@ -66,47 +101,43 @@ export default function EditUserScreen() {
     };
 
     fetchRoles();
-  }, []);
+  }, [isAuthorized]);
 
-  // Pobieranie danych użytkownika podczas edycji
+  // 5. Pobieranie danych edytowanego użytkownika
   useEffect(() => {
-    if (isEditMode && id) {
-      const fetchUser = async () => {
-        try {
-          setIsFetching(true);
+    if (!isAuthorized || !isEditMode || !id) return;
 
-          const response = await api.get(`/users/${id}`);
-          const user = response.data?.data ?? response.data;
+    const fetchUser = async () => {
+      try {
+        setIsFetching(true);
 
-          setName(user.name ?? '');
-          setSurname(user.surname ?? '');
-          setEmail(user.email ?? '');
+        const response = await api.get(`/users/${id}`);
+        const user = response.data?.data ?? response.data;
 
-          setSelectedRoleId(
-            user.role_id !== null && user.role_id !== undefined
-              ? String(user.role_id)
-              : ''
-          );
+        setName(user.name ?? '');
+        setSurname(user.surname ?? '');
+        setEmail(user.email ?? '');
 
-          setIsApproved(Boolean(user.is_approved));
-          setIsActive(Boolean(user.is_active));
+        setSelectedRoleId(
+          user.role_id !== null && user.role_id !== undefined
+            ? String(user.role_id)
+            : ''
+        );
 
-          // Hasła nie pobieramy z API
-          setPassword('');
+        setIsApproved(Boolean(user.is_approved));
+        setIsActive(Boolean(user.is_active));
+        setPassword('');
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        setErrorMessage('Error loading user data.');
+      } finally {
+        setIsFetching(false);
+      }
+    };
 
-        } catch (error) {
-          console.error('Error fetching user:', error);
-          setErrorMessage('Error loading user data.');
-        } finally {
-          setIsFetching(false);
-        }
-      };
+    fetchUser();
+  }, [isAuthorized, isEditMode, id]);
 
-      fetchUser();
-    }
-  }, [isEditMode, id]);
-
-  // Dodawanie lub edycja użytkownika
   const handleSave = async () => {
     if (!name.trim() || !surname.trim() || !email.trim()) {
       setErrorMessage('Name, surname and email are required.');
@@ -144,7 +175,6 @@ export default function EditUserScreen() {
         is_active: isActive,
       };
 
-      // Hasło wysyłamy tylko jeśli zostało wpisane
       if (password.trim()) {
         payload.password = password;
       }
@@ -156,14 +186,12 @@ export default function EditUserScreen() {
       }
 
       router.back();
-
     } catch (error: any) {
       console.error('Error saving user:', error);
 
       if (error.response?.data?.errors) {
         const errors = error.response.data.errors;
         const firstError = Object.values(errors).flat()[0];
-
         setErrorMessage(String(firstError));
       } else if (error.response?.data?.message) {
         setErrorMessage(error.response.data.message);
@@ -175,7 +203,6 @@ export default function EditUserScreen() {
     }
   };
 
-  // Usuwanie użytkownika
   const handleDelete = async () => {
     if (!id) return;
 
@@ -184,27 +211,19 @@ export default function EditUserScreen() {
       setErrorMessage('');
 
       await api.delete(`/users/${id}`);
-
       router.back();
-
     } catch (error: any) {
       console.error('Error deleting user:', error);
-
       setErrorMessage(
         error.response?.data?.message ?? 'Failed to delete user.'
       );
-
       setIsLoading(false);
     }
   };
 
-  // Ekran ładowania
-  if (isFetching) {
-    return (
-      <Center className="flex-1 bg-background">
-        <Spinner size="large" />
-      </Center>
-    );
+  // 6. Wczesne wyjście dopiero po zadeklarowaniu wszystkich hooków
+  if (isCheckingAuth || !isAuthorized || isFetching) {
+    return <AppLoadingScreen />;
   }
 
   return (
@@ -220,8 +239,6 @@ export default function EditUserScreen() {
       ) : null}
 
       <AppCard className="p-5 mb-6" space="md">
-
-        {/* Name */}
         <VStack space="xs">
           <AppText variant="muted">Name</AppText>
           <AppInput
@@ -231,7 +248,6 @@ export default function EditUserScreen() {
           />
         </VStack>
 
-        {/* Surname */}
         <VStack space="xs">
           <AppText variant="muted">Surname</AppText>
           <AppInput
@@ -241,10 +257,8 @@ export default function EditUserScreen() {
           />
         </VStack>
 
-        {/* Role */}
         <VStack space="xs">
           <AppText variant="muted">Role</AppText>
-
           <AppSelect
             value={selectedRoleId}
             onChange={setSelectedRoleId}
@@ -256,7 +270,6 @@ export default function EditUserScreen() {
           />
         </VStack>
 
-        {/* Email */}
         <VStack space="xs">
           <AppText variant="muted">Email</AppText>
           <AppInput
@@ -268,12 +281,10 @@ export default function EditUserScreen() {
           />
         </VStack>
 
-        {/* Password */}
         <VStack space="xs">
           <AppText variant="muted">
             Password {isEditMode ? '(optional)' : ''}
           </AppText>
-
           <AppInput
             placeholder={
               isEditMode
@@ -287,7 +298,6 @@ export default function EditUserScreen() {
           />
         </VStack>
 
-        {/* Account status */}
         <AppSwitchRow
           label="Approved?"
           value={isApproved}
@@ -299,10 +309,8 @@ export default function EditUserScreen() {
           value={isActive}
           onChange={setIsActive}
         />
-
       </AppCard>
 
-      {/* Save */}
       <AppButton
         title="Save"
         className="w-full mb-3"
@@ -310,18 +318,16 @@ export default function EditUserScreen() {
         onPress={handleSave}
       />
 
-      {/* Delete */}
-        {isEditMode && Number(selectedRoleId) !== 1 && (
+      {isEditMode && Number(selectedRoleId) !== 1 && (
         <AppButton
-            title="Delete user"
-            variant="danger"
-            className="w-full mb-3"
-            disabled={isLoading}
-            onPress={handleDelete}
+          title="Delete user"
+          variant="danger"
+          className="w-full mb-3"
+          disabled={isLoading}
+          onPress={handleDelete}
         />
-        )}
+      )}
 
-      {/* Back */}
       <AppButton
         title="Back"
         variant="secondary"
@@ -329,7 +335,6 @@ export default function EditUserScreen() {
         disabled={isLoading}
         onPress={() => router.back()}
       />
-
     </AppScreen>
   );
 }
