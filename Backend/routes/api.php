@@ -36,6 +36,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/users/{user}/reject', [UserController::class, 'reject']);
         // Pełny CRUD użytkowników (index, store, show, update, destroy) wewnątrz managera
         Route::apiResource('users', UserController::class);
+
+        // Zarządzanie salami - wyrzucenie użytkownika, wpisanie ręcznie nowego
+        Route::post('/rooms/{room}/kick', [RoomController::class, 'kick']);
+        Route::post('/rooms/{room}/assign', [RoomController::class, 'assign']);
     });
 });
 

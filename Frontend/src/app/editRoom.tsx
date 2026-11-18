@@ -8,6 +8,11 @@ import { VStack } from '@/components/ui/vstack';
 
 import { Spinner } from '@/components/ui/spinner';
 
+import {
+  Select, SelectTrigger, SelectInput, SelectIcon, SelectPortal,
+  SelectBackdrop, SelectContent, SelectDragIndicatorWrapper,
+  SelectDragIndicator, SelectItem,
+} from '@/components/ui/select';
 
 import {
   AppScreen, AppHeading, AppText, AppInput, AppButton, AppCard, AppSwitchRow,
@@ -15,10 +20,18 @@ import {
 
 import { api } from '@/services/api';
 
+interface UserOption {
+  id: number;
+  name: string;
+  surname: string;
+  role_id: number;
+  is_active: boolean;
+}
+
 export default function EditRoomScreen() {
   const router = useRouter();
   const { action, id } = useLocalSearchParams<{ action: string; id?: string }>();
-  
+
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
@@ -32,6 +45,12 @@ export default function EditRoomScreen() {
   const [isFetching, setIsFetching] = useState(isEditMode);
   const [errorMessage, setErrorMessage] = useState('');
 
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [roomStatus, setRoomStatus] = useState('free');
+  const [assignUserId, setAssignUserId] = useState('');
+
+  const [users, setUsers] = useState<UserOption[]>([]);
+
   // 1. Sprawdzenie roli użytkownika
   useEffect(() => {
     const checkRole = async () => {
@@ -44,7 +63,6 @@ export default function EditRoomScreen() {
 
         const user = JSON.parse(userDataStr);
         if (user.role_id !== 1) {
-          // Użytkownik nie jest portierem -> cofnij go
           router.replace('/home');
           return;
         }
@@ -60,7 +78,7 @@ export default function EditRoomScreen() {
     checkRole();
   }, []);
 
-  // Pobierz dane sali, jeśli jesteśmy w trybie edycji
+  // Pobierz dane sali i listę użytkowników, jeśli jesteśmy w trybie edycji
   useEffect(() => {
     if (isEditMode && id) {
       const fetchRoom = async () => {
@@ -70,6 +88,19 @@ export default function EditRoomScreen() {
           setNumber(response.data.number);
           setHasPiano(response.data.has_piano);
           setIsOpen(response.data.is_open);
+          setCurrentUserId(response.data.user_id ?? null);
+          setRoomStatus(response.data.status ?? 'free');
+          setAssignUserId(
+            response.data.pending_user_id ? String(response.data.pending_user_id) : ''
+          );
+
+          const usersRes = await api.get('/users');
+          const data = usersRes.data?.data ?? usersRes.data;
+          setUsers(
+            (Array.isArray(data) ? data : []).filter(
+              (u: UserOption) => u.is_active && u.role_id !== 1
+            )
+          );
         } catch (error) {
           console.error('Error fetching room:', error);
           setErrorMessage('Error loading room data.');
@@ -136,6 +167,43 @@ export default function EditRoomScreen() {
     }
   };
 
+  const handleKick = async () => {
+    if (!id) return;
+    try {
+      setIsLoading(true);
+      setErrorMessage('');
+      await api.post(`/rooms/${id}/kick`);
+      setCurrentUserId(null);
+      setRoomStatus('free');
+      setAssignUserId('');
+    } catch (error) {
+      console.error('Error kicking user:', error);
+      setErrorMessage('Failed to remove user from room.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAssign = async () => {
+    if (!id || !assignUserId) {
+      setErrorMessage('Select a user.');
+      return;
+    }
+    try {
+      setIsLoading(true);
+      setErrorMessage('');
+      await api.post(`/rooms/${id}/assign`, { user_id: Number(assignUserId) });
+      setCurrentUserId(Number(assignUserId));
+      setRoomStatus('occupied');
+      setAssignUserId('');
+    } catch (error: any) {
+      console.error('Error assigning user:', error);
+      setErrorMessage(error.response?.data?.message ?? 'Failed to assign user.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (isFetching) {
     return (
       <Center className="flex-1 bg-background">
@@ -144,9 +212,16 @@ export default function EditRoomScreen() {
     );
   }
 
+  const currentUser = users.find((u) => u.id === currentUserId);
+  const currentUserLabel = currentUser
+    ? ` (${currentUser.surname} ${currentUser.name})`
+    : currentUserId !== null
+      ? ` (user #${currentUserId})`
+      : '';
+
   return (
     <AppScreen>
-      <AppHeading className="mb-6">{isEditMode ? 'Edit room' : 'Add new room'}</AppHeading>
+      <AppHeading className="mb-6 text-center">{isEditMode ? 'Edit room' : 'Add new room'}</AppHeading>
 
       {errorMessage ? <AppText variant="error" className="mb-4">{errorMessage}</AppText> : null}
 
@@ -159,6 +234,56 @@ export default function EditRoomScreen() {
         <AppSwitchRow label="Has piano?" value={hasPiano} onChange={setHasPiano} />
         <AppSwitchRow label="Is open?" value={isOpen} onChange={setIsOpen} />
       </AppCard>
+
+      {isEditMode && (
+        <AppCard className="p-5 mb-6" space="md">
+          <AppText variant="muted">
+            Status: {roomStatus}{currentUserLabel}
+          </AppText>
+
+          {currentUserId !== null && (
+            <AppButton
+              title="Remove current user"
+              variant="danger"
+              className="w-full"
+              disabled={isLoading}
+              onPress={handleKick}
+            />
+          )}
+
+          <VStack space="xs">
+            <AppText variant="muted">Assign user</AppText>
+            <Select selectedValue={assignUserId} onValueChange={setAssignUserId}>
+              <SelectTrigger>
+                <SelectInput placeholder="Select user" />
+                <SelectIcon className="mr-3" />
+              </SelectTrigger>
+              <SelectPortal>
+                <SelectBackdrop />
+                <SelectContent>
+                  <SelectDragIndicatorWrapper>
+                    <SelectDragIndicator />
+                  </SelectDragIndicatorWrapper>
+                  {users.map((u) => (
+                    <SelectItem
+                      key={u.id}
+                      label={`${u.surname} ${u.name}`}
+                      value={String(u.id)}
+                    />
+                  ))}
+                </SelectContent>
+              </SelectPortal>
+            </Select>
+          </VStack>
+
+          <AppButton
+            title="Assign user"
+            className="w-full"
+            disabled={isLoading}
+            onPress={handleAssign}
+          />
+        </AppCard>
+      )}
 
       <AppButton title="Save" className="w-full mb-3" loading={isLoading} onPress={handleSave} />
 

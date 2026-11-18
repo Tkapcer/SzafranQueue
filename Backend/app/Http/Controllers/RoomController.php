@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Room;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class RoomController extends Controller
@@ -72,5 +73,42 @@ class RoomController extends Controller
         $room->delete();
 
         return response()->json(['message' => 'Room deleted successfully']);
+    }
+
+    // metody kick i assign do zarządzania użytkownikami w salach
+    public function kick(Request $request, Room $room)
+    {
+        abort_unless($request->user()?->role_id === 1, 403, 'Forbidden');
+
+        $room->update([
+            'status' => 'free',
+            'user_id' => null,
+            'entry_time' => null,
+            'last_heartbeat_at' => null,
+            'pending_user_id' => null,
+            'pending_until' => null,
+        ]);
+
+        return response()->json(['message' => 'User kicked from room successfully']);
+    }
+
+    public function assign(Request $request, Room $room)
+    {
+        abort_unless($request->user()?->role_id === 1, 403, 'Forbidden');
+
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        $room->update([
+            'status' => 'occupied',
+            'user_id' => $validated['user_id'],
+            'entry_time' => now(),
+            'last_heartbeat_at' => now(),
+            'pending_user_id' => null,
+            'pending_until' => null,
+        ]);
+
+        return response()->json(['message' => 'User assigned to room successfully']);
     }
 }

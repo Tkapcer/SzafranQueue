@@ -184,11 +184,15 @@ export default function HomeScreen() {
             {filteredRooms.map((room, index) => (
               <AppRow key={room.id} divider={index > 0 ? 'top' : 'none'}>
                 <AppText className="flex-1">{room.number}</AppText>
-                <AppText variant="muted" className="w-20">{room.has_piano ? 'Piano' : 'No piano'}</AppText>
+                <AppText variant="muted" className="w-20">{room.has_piano ? 'piano' : 'no piano'}</AppText>
 
                 {isManager && (
-                  <AppText variant="muted" className="w-20">{room.is_open ? 'Open' : 'Closed'}</AppText>
+                  <AppText variant="muted" className="w-20">{room.is_open ? 'open' : 'closed'}</AppText>
                 )}
+
+
+                <AppText variant="muted" className="w-20">{room.status}</AppText>
+
 
                 {isManager ? (
                   <AppButton
