@@ -26,15 +26,19 @@ class RoomController extends Controller
                 'entry_time' => null,
                 'last_heartbeat_at' => null,
             ]);
+
         $user = $request->user();
 
-        // Jeśli użytkownik to portier (role_id === 1), zwracamy wszystkie sale
+        // Tylko id i role_id, żeby nie wysyłać reszty danych użytkownika
+        $query = Room::with('currentUser:id,role_id');
+
+        // Portier widzi wszystkie sale
         if ($user && $user->role_id == 1) {
-            return Room::all();
+            return $query->get();
         }
 
         // Pozostali widzą tylko otwarte sale
-        return Room::where('is_open', true)->get();
+        return $query->where('is_open', true)->get();
     }
 
     public function store(Request $request)

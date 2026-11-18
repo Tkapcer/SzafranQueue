@@ -25,14 +25,28 @@ class RoomOccupancyController extends Controller
                 'entry_time' => null,
                 'last_heartbeat_at' => null,
             ]);
-        if (!$room->is_open || $room->status !== 'free') {
+
+        // Odśwież salę po czyszczeniu, bo $room mógł zostać zwolniony powyżej
+        $room->refresh()->load('currentUser');
+
+        $user = $request->user();
+
+        $isFree = $room->status === 'free';
+        $lecturerOverridesStudent = $user->role_id === 3
+            && $room->status === 'occupied'
+            && $room->currentUser?->role_id === 2;
+
+        if (!$room->is_open || (!$isFree && !$lecturerOverridesStudent)) {
             return response()->json(['message' => 'Sala jest już zajęta lub zamknięta.'], 409);
         }
 
         $room->update([
             'status' => 'occupied',
-            'user_id' => $request->user()->id,
+            'user_id' => $user->id,
             'entry_time' => now(),
+            'last_heartbeat_at' => now(),
+            'pending_user_id' => null,
+            'pending_until' => null,
         ]);
 
         return response()->json(['message' => 'Pomyślnie zajęto salę.', 'room' => $room]);

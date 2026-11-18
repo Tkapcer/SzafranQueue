@@ -28,6 +28,7 @@ interface Room {
   is_open: boolean;
   status: string;
   user_id?: number | null;
+  current_user?: { id: number; role_id: number } | null;
 }
 
 export default function HomeScreen() {
@@ -118,9 +119,14 @@ export default function HomeScreen() {
   }
 
   const isManager = user?.role_id === 1;
+  const isLecturer = user?.role_id === 3;
+
+  const canBook = (room: Room) =>
+    room.status === 'free' ||
+    (isLecturer && room.status === 'occupied' && room.current_user?.role_id === 2);
 
   const filteredRooms = rooms.filter((room) => room.is_open || isManager);
-  const isAnyFree = filteredRooms.some((room) => room.status === "free");
+  const isAnyFree = filteredRooms.some((room) => canBook(room));
   const isAnyOpen = filteredRooms.some((room) => room.is_open);
 
   return (
@@ -169,7 +175,8 @@ export default function HomeScreen() {
         <AppRow divider="bottom">
           <AppText variant="bold" className="flex-1">Room</AppText>
           <AppText variant="bold" className="w-20">Piano</AppText>
-          {isManager && <AppText variant="bold" className="w-20">Status</AppText>}
+          {isManager && <AppText variant="bold" className="w-20">Open</AppText>}
+          <AppText variant="bold" className="w-20">Status</AppText>
           {isManager ? <Box className="w-20" /> : <Box className="w-28" />}
         </AppRow>
 
@@ -190,9 +197,7 @@ export default function HomeScreen() {
                   <AppText variant="muted" className="w-20">{room.is_open ? 'open' : 'closed'}</AppText>
                 )}
 
-
                 <AppText variant="muted" className="w-20">{room.status}</AppText>
-
 
                 {isManager ? (
                   <AppButton
@@ -203,7 +208,7 @@ export default function HomeScreen() {
                     onPress={() => router.push({ pathname: '/editRoom', params: { action: 'edit', id: room.id } })}
                   />
                 ) : (
-                  room.status === "free" ? (
+                  canBook(room) ? (
                     <AppButton
                       title="Book"
                       size="sm"
