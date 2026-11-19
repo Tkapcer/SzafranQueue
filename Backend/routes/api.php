@@ -4,8 +4,9 @@ use App\Http\Controllers\ApiAuthController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\RoomOccupancyController;
 use App\Http\Controllers\UserController;
-use App\Http\Middleware\EnsureUserIsManager; // <-- KLUCZOWY IMPORT!
+use App\Http\Middleware\EnsureUserIsManager;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\QueueController;
 
 // Trasy publiczne (nie wymagają tokenu)
 Route::post('/login', [ApiAuthController::class, 'login']);
@@ -24,6 +25,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // Akcje użytkownika w sali
     Route::post('/rooms/{room}/occupy', [RoomOccupancyController::class, 'occupy']);
     Route::post('/rooms/{room}/leave', [RoomOccupancyController::class, 'leave']);
+
+    // Kolejka
+    Route::post('/queue/join', [QueueController::class, 'join']);
+    Route::get('/queue/status', [QueueController::class, 'status']);
+    Route::post('/queue/accept', [QueueController::class, 'accept']);
+    Route::post('/queue/reject', [QueueController::class, 'reject']);
 
     // Tylko dla Portiera / Managera (role_id === 1)
     Route::middleware(EnsureUserIsManager::class)->group(function () {

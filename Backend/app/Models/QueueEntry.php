@@ -1,30 +1,34 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class QueueEntry extends Model
 {
     protected $table = 'queue_entries';
-    public $timestamps = false;
 
     protected $fillable = [
         'user_id',
         'requires_piano',
-        'priority_level', // wykładowca - 1, wyproszony student - 2, student - 3
-        'status',          // 'waiting' - czeka, 'offered' - ma salę, ale jeszcze nie wszedł, 'completed' - wyszedł
-        'offered_at',        // czas, kiedy otrzymał ofertę wejścia
-        'created_at',        // czas dodania do kolejki
+        'priority_level',
+        'status',
+        'offered_room_id',
     ];
 
     protected $casts = [
-        'offered_at' => 'datetime',
-        'created_at' => 'datetime',
         'requires_piano' => 'boolean',
+        'priority_level' => 'integer',
     ];
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function offeredRoom(): BelongsTo
+    {
+        return $this->belongsTo(Room::class, 'offered_room_id');
     }
 }

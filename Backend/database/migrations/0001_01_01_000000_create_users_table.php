@@ -53,12 +53,15 @@ return new class extends Migration
 
         Schema::create('queue_entries', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->boolean('requires_piano')->default(false);
-            $table->enum('priority_level', ['1', '2', '3'])->default('3'); // 1 - wykładowca, 2 - wyproszony student, 3 - student
-            $table->enum('status', ['waiting', 'offered', 'completed'])->default('waiting'); // 'waiting' - czeka, 'offered' - ma salę, ale jeszcze nie wszedł, 'completed' - wyszedł
-            $table->dateTime('offered_at')->nullable(); // czas, kiedy otrzymał ofertę wejścia
-            $table->dateTime('created_at')->useCurrent(); // czas dodania do kolejki
+            // 1 = wykładowca (role_id === 3), 2 = student (role_id === 2)
+            $table->unsignedTinyInteger('priority_level')->default(2);
+            $table->string('status')->default('waiting'); // 'waiting' | 'offered'
+            $table->foreignId('offered_room_id')->nullable()->constrained('room')->nullOnDelete();
+            $table->timestamps();
+
+            $table->unique('user_id');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
@@ -88,5 +91,6 @@ return new class extends Migration
         Schema::dropIfExists('room');
         Schema::dropIfExists('roles');
         Schema::dropIfExists('paths');
+        Schema::dropIfExists('queue_entries');
     }
 };
