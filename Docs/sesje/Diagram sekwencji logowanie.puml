@@ -2,45 +2,82 @@
 
 actor Użytkownik
 
-box "Frontend"
+box "Frontend (Expo)"
     boundary LoginForm
+    control "Expo LocalAuth" as LocalAuth
+    entity "Expo SecureStore" as SecureStore
 end box
 
-box "Backend"
+box "Backend (Laravel API)"
     control ApiAuthController
     entity LoginRequest
     entity User
     database Database
 end box
 
-Użytkownik -> LoginForm: Wypełnienie i wysłanie formularza
+Użytkownik -> LoginForm: Otwarcie ekranu logowania
 activate LoginForm
-LoginForm -> ApiAuthController: POST /login
-deactivate LoginForm
-activate ApiAuthController
-ApiAuthController -> LoginRequest: Walidacja danych
-activate LoginRequest
 
-alt Poprawne dane przekazane przez użytkownika
-    LoginRequest --> ApiAuthController: Dane po walidacji
-    ApiAuthController --> Database: Wyszukanie email
-    activate Database
+alt Logowanie klasyczne (email i hasło)
+    Użytkownik -> LoginForm: Wypełnienie i wysłanie formularza
+    LoginForm -> ApiAuthController: POST /api/login (email, hasło)
+    activate ApiAuthController
 
-    User --> ApiAuthController: Nowa instancja klasy User
-    deactivate User
-    ApiAuthController -> Database: INSERT INTO users
-    activate Database
-    Database --> ApiAuthController: Potwierdzenie
-    deactivate Database
-    ApiAuthController -> ApiAuthController: Zapis obiektu User w sesji
-    ApiAuthController --> Użytkownik: Przeniesienie na stronę logowania z informacją o oczekiwaniu na zatwierdzenie konta
-else Niepoprawne dane przekazane przez użytkownika
-    LoginRequest --> ApiAuthController: Komunikaty o błędach walidacji
+    ApiAuthController -> LoginRequest: Walidacja danych
+    activate LoginRequest
+    LoginRequest --> ApiAuthController: Wynik walidacji
     deactivate LoginRequest
-    ApiAuthController --> LoginForm: Komunikaty o błędach walidacji
+
+    alt Poprawne dane wejściowe
+        ApiAuthController -> User: where('email', ...)->first()
+        activate User
+        User -> Database: SELECT * FROM users WHERE email = ?
+        activate Database
+        Database --> User: Rekord użytkownika (lub brak)
+        deactivate Database
+        User --> ApiAuthController: Instancja User (lub null)
+        deactivate User
+
+        alt Użytkownik istnieje i hasło jest poprawne
+            ApiAuthController -> ApiAuthController: Weryfikacja hasła i wygenerowanie tokenu
+            ApiAuthController --> LoginForm: 200 OK (token, dane użytkownika)
+            LoginForm -> SecureStore: Zapisanie tokenu lokalnie
+            activate SecureStore
+            SecureStore --> LoginForm: Potwierdzenie zapisu
+            deactivate SecureStore
+            LoginForm --> Użytkownik: Przekierowanie do ekranu głównego
+        else Błędny email lub hasło
+            ApiAuthController --> LoginForm: 401 Unauthorized (błąd logowania)
+            LoginForm --> Użytkownik: Wyświetlenie komunikatu o błędnych danych
+        end
+    else Niepoprawne dane wejściowe
+        ApiAuthController --> LoginForm: 422 Unprocessable Entity (błędy walidacji)
+        LoginForm --> Użytkownik: Wyświetlenie komunikatów o błędach
+    end
     deactivate ApiAuthController
-    activate LoginForm
-    LoginForm --> Użytkownik: Wyświetlenie komunikatów o błędach
-    deactivate LoginForm
+
+else Logowanie biometrią (lokalnie w Expo)
+    Użytkownik -> LoginForm: Wybór logowania biometrią
+    LoginForm -> LocalAuth: authenticateAsync() (odcisk palca / FaceID)
+    activate LocalAuth
+    LocalAuth --> LoginForm: Wynik weryfikacji (success: true / false)
+    deactivate LocalAuth
+
+    alt Biometria poprawna
+        LoginForm -> SecureStore: Odczyt zapisanego wcześniej tokenu
+        activate SecureStore
+        SecureStore --> LoginForm: Zapisany token (lub brak)
+        deactivate SecureStore
+
+        alt Token istnieje lokalnie
+            LoginForm --> Użytkownik: Odblokowanie i przejście do ekranu głównego
+        else Brak zapisanego tokenu
+            LoginForm --> Użytkownik: Wymagane pierwsze logowanie hasłem
+        end
+    else Biometria nieudana lub anulowana
+        LoginForm --> Użytkownik: Komunikat błędu / powrót do formularza
+    end
 end
+
+deactivate LoginForm
 @enduml
