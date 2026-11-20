@@ -228,7 +228,7 @@ export default function EditUserScreen() {
 
   return (
     <AppScreen>
-      <AppHeading className="mb-6">
+      <AppHeading className="mb-6 text-center">
         {isEditMode ? 'Edit user' : 'Add new user'}
       </AppHeading>
 

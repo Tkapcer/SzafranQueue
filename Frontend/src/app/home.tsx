@@ -5,7 +5,7 @@ import { storage } from '@/services/storage';
 import { Box } from '@/components/ui/box';
 import { Center } from '@/components/ui/center';
 import { Spinner } from '@/components/ui/spinner';
-import { ScrollView, Alert } from 'react-native';
+import { ScrollView, Alert, Platform } from 'react-native';
 
 import {
   AppScreen, AppLoadingScreen, AppHeading, AppText, AppButton, AppCard, AppRow,
@@ -28,6 +28,7 @@ interface Room {
   is_open: boolean;
   status: string;
   user_id?: number | null;
+  current_user?: { id: number; role_id: number } | null;
 }
 
 export default function HomeScreen() {
@@ -113,14 +114,44 @@ export default function HomeScreen() {
     }
   };
 
+  const joinQueueWithPreference = async (requiresPiano: boolean) => {
+    try {
+      await api.post('/queue/join', { requires_piano: requiresPiano });
+      router.push('/queue');
+    } catch (error: any) {
+      Alert.alert('Error', error.response?.data?.message || 'Failed to join the queue.');
+    }
+  };
+
+  const onJoinQueue = () => {
+    if (Platform.OS === 'web') {
+      const wantsPiano = window.confirm('Do you need a room with a piano?');
+      joinQueueWithPreference(wantsPiano);
+    } else {
+      Alert.alert(
+        'Piano preference',
+        'Do you need a room with a piano?',
+        [
+          { text: 'No', onPress: () => joinQueueWithPreference(false) },
+          { text: 'Yes', onPress: () => joinQueueWithPreference(true) },
+        ]
+      );
+    }
+  };
+
   if (isLoading) {
     return <AppLoadingScreen />;
   }
 
   const isManager = user?.role_id === 1;
+  const isLecturer = user?.role_id === 3;
+
+  const canBook = (room: Room) =>
+    room.status === 'free' ||
+    (isLecturer && room.status === 'occupied' && room.current_user?.role_id === 2);
 
   const filteredRooms = rooms.filter((room) => room.is_open || isManager);
-  const isAnyFree = filteredRooms.some((room) => room.status === "free");
+  const isAnyFree = filteredRooms.some((room) => canBook(room));
   const isAnyOpen = filteredRooms.some((room) => room.is_open);
 
   return (
@@ -161,7 +192,7 @@ export default function HomeScreen() {
           title="Join the queue"
           variant="secondary"
           className="w-full mb-4"
-          onPress={() => console.log('Join the queue')}
+          onPress={() => onJoinQueue()}
         />
       )}
 
@@ -169,7 +200,8 @@ export default function HomeScreen() {
         <AppRow divider="bottom">
           <AppText variant="bold" className="flex-1">Room</AppText>
           <AppText variant="bold" className="w-20">Piano</AppText>
-          {isManager && <AppText variant="bold" className="w-20">Status</AppText>}
+          {isManager && <AppText variant="bold" className="w-20">Open</AppText>}
+          <AppText variant="bold" className="w-20">Status</AppText>
           {isManager ? <Box className="w-20" /> : <Box className="w-28" />}
         </AppRow>
 
@@ -184,11 +216,13 @@ export default function HomeScreen() {
             {filteredRooms.map((room, index) => (
               <AppRow key={room.id} divider={index > 0 ? 'top' : 'none'}>
                 <AppText className="flex-1">{room.number}</AppText>
-                <AppText variant="muted" className="w-20">{room.has_piano ? 'Piano' : 'No piano'}</AppText>
+                <AppText variant="muted" className="w-20">{room.has_piano ? 'piano' : 'no piano'}</AppText>
 
                 {isManager && (
-                  <AppText variant="muted" className="w-20">{room.is_open ? 'Open' : 'Closed'}</AppText>
+                  <AppText variant="muted" className="w-20">{room.is_open ? 'open' : 'closed'}</AppText>
                 )}
+
+                <AppText variant="muted" className="w-20">{room.status}</AppText>
 
                 {isManager ? (
                   <AppButton
@@ -199,7 +233,7 @@ export default function HomeScreen() {
                     onPress={() => router.push({ pathname: '/editRoom', params: { action: 'edit', id: room.id } })}
                   />
                 ) : (
-                  room.status === "free" ? (
+                  canBook(room) ? (
                     <AppButton
                       title="Book"
                       size="sm"
