@@ -1,0 +1,46 @@
+@startuml
+
+actor Użytkownik
+
+box "Frontend"
+    boundary LoginForm
+end box
+
+box "Backend"
+    control ApiAuthController
+    entity LoginRequest
+    entity User
+    database Database
+end box
+
+Użytkownik -> LoginForm: Wypełnienie i wysłanie formularza
+activate LoginForm
+LoginForm -> ApiAuthController: POST /login
+deactivate LoginForm
+activate ApiAuthController
+ApiAuthController -> LoginRequest: Walidacja danych
+activate LoginRequest
+
+alt Poprawne dane przekazane przez użytkownika
+    LoginRequest --> ApiAuthController: Dane po walidacji
+    ApiAuthController --> Database: Wyszukanie email
+    activate Database
+
+    User --> ApiAuthController: Nowa instancja klasy User
+    deactivate User
+    ApiAuthController -> Database: INSERT INTO users
+    activate Database
+    Database --> ApiAuthController: Potwierdzenie
+    deactivate Database
+    ApiAuthController -> ApiAuthController: Zapis obiektu User w sesji
+    ApiAuthController --> Użytkownik: Przeniesienie na stronę logowania z informacją o oczekiwaniu na zatwierdzenie konta
+else Niepoprawne dane przekazane przez użytkownika
+    LoginRequest --> ApiAuthController: Komunikaty o błędach walidacji
+    deactivate LoginRequest
+    ApiAuthController --> LoginForm: Komunikaty o błędach walidacji
+    deactivate ApiAuthController
+    activate LoginForm
+    LoginForm --> Użytkownik: Wyświetlenie komunikatów o błędach
+    deactivate LoginForm
+end
+@enduml
