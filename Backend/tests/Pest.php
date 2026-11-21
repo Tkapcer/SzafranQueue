@@ -3,6 +3,10 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+use App\Models\Role;
+use App\Models\Room;
+use App\Models\User;
+
 /*
 |--------------------------------------------------------------------------
 | Test Case
@@ -16,7 +20,7 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
-    ->in('Feature');
+    ->in('UnitTests', 'IntegrationTests', 'SecurityTests');
 
 /*
 |--------------------------------------------------------------------------
@@ -44,7 +48,52 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+function roleWithId(int $id): Role
 {
-    // ..
+    $names = [1 => 'Manager', 2 => 'Student', 3 => 'Lecturer'];
+
+    return Role::find($id) ?? Role::forceCreate([
+        'id' => $id,
+        'name' => $names[$id],
+        'alias' => strtolower($names[$id]),
+        'is_selectable' => $id !== 1,
+    ]);
+}
+
+function makeUser(int $roleId, string $email, array $overrides = []): User
+{
+    return User::create(array_merge([
+        'name' => 'Jan',
+        'surname' => 'Kowalski',
+        'email' => $email,
+        'password' => 'password123',
+        'role_id' => roleWithId($roleId)->id,
+        'is_approved' => true,
+        'is_active' => true,
+    ], $overrides));
+}
+
+function makeManager(): User  { return makeUser(1, 'manager@example.com'); }
+function makeStudent(string $email = 'student@example.com'): User { return makeUser(2, $email); }
+function makeLecturer(): User { return makeUser(3, 'lecturer@example.com'); }
+
+function makeRoom(array $overrides = []): Room
+{
+    return Room::create(array_merge([
+        'number' => '101',
+        'has_piano' => false,
+        'is_open' => true,
+        'status' => 'free',
+    ], $overrides));
+}
+
+function registrationPayload(array $overrides = []): array
+{
+    return array_merge([
+        'name' => 'Jan',
+        'surname' => 'Kowalski',
+        'email' => 'jan@example.com',
+        'password' => 'password123',
+        'role_id' => roleWithId(2)->id,
+    ], $overrides);
 }

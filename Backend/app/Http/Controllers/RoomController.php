@@ -43,6 +43,8 @@ class RoomController extends Controller
 
     public function store(Request $request)
     {
+        abort_unless($request->user()?->role_id === 1, 403, 'Forbidden');
+        
         $validated = $request->validate([
             'number' => 'required|string|unique:room,number',
             'has_piano' => 'boolean',
