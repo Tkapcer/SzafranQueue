@@ -1,0 +1,75 @@
+services:
+  db_test:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: SzafranQueue_test
+      POSTGRES_USER: laravel_user
+      POSTGRES_PASSWORD: ChangeMe!
+    # Baza działa wyłącznie w RAM – superszybkie testy, zero śmieci na dysku
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U laravel_user -d SzafranQueue_test"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+
+  backend_test:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    depends_on:
+      db_test:
+        condition: service_healthy
+    volumes:
+      - ./backend:/var/www/html
+      - ./.env:/var/www/html/.env:ro
+      - vendor_data:/var/www/html/vendor
+    # Zmienne systemowe w Dockerze nadpisują plik .env w Laravelu
+    environment:
+      APP_ENV: testing
+      APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      DB_CONNECTION: pgsql
+      DB_HOST: db_test
+      DB_PORT: 5432
+      DB_DATABASE: SzafranQueue_test
+      DB_USERNAME: laravel_user
+      DB_PASSWORD: ChangeMe!
+      BCRYPT_ROUNDS: 4
+      SESSION_DRIVER: array
+      CACHE_STORE: array
+      QUEUE_CONNECTION: sync
+      
+  backend_e2e:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    depends_on:
+      db_test:
+        condition: service_healthy
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./backend:/var/www/html
+      - vendor_data:/var/www/html/vendor
+    environment:
+      APP_ENV: testing
+      APP_DEBUG: "true"
+      APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      DB_CONNECTION: pgsql
+      DB_HOST: db_test
+      DB_PORT: 5432
+      DB_DATABASE: SzafranQueue_test
+      DB_USERNAME: laravel_user
+      DB_PASSWORD: ChangeMe!
+      BCRYPT_ROUNDS: 4
+      SESSION_DRIVER: array
+      CACHE_STORE: array
+      QUEUE_CONNECTION: sync
+      PHP_CLI_SERVER_WORKERS: 4
+    command: >
+      sh -c "
+      if [ ! -f vendor/autoload.php ]; then composer install; fi &&
+      php artisan config:clear &&
+      php artisan migrate:fresh --seed --seeder=E2ETestSeeder --force &&
+      php -d variables_order=EGPCS -S 0.0.0.0:8000 -t public public/index.php"

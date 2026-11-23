@@ -71,6 +71,19 @@ Aplikacja posiada publiczny endpoint sprawdzający, czy serwer funkcjonuje popra
 }
 ```
 
+## Uruchamianie testów
+
+**Aby uruchomić testy, w katalogu głównym projektu wykonaj:**
+```bash
+.\test.bat
+```
+Parametry podane po `.\test.bat` są przekazywane bezpośrednio do komendy `npx playwright test`. W związku z czym aby uruchomić testy E2E z podglądem okna przekaż parametr `--headed`.
+Po wykonaniu testów E2E możesz otworzyć z nich raport za pomoca komendy:
+```bash
+cd frontend
+npx playwright show-report
+```
+
 ## Przydatne komendy i rozwiązywanie problemów
 
 **Twardy reset bazy danych (Migrate Fresh + Seed):**
