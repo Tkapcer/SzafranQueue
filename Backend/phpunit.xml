@@ -14,6 +14,9 @@
         <testsuite name="Security">
             <directory>tests/SecurityTests</directory>
         </testsuite>
+        <testsuite name="Endpoint">
+            <directory>tests/EndpointTest</directory>
+        </testsuite>
     </testsuites>
     <source>
         <include>

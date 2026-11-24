@@ -20,7 +20,7 @@ use App\Models\User;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
-    ->in('UnitTests', 'IntegrationTests', 'SecurityTests');
+    ->in('UnitTests', 'IntegrationTests', 'SecurityTests', 'EndpointTest');
 
 /*
 |--------------------------------------------------------------------------
