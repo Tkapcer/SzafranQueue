@@ -2,6 +2,7 @@ import axios from 'axios';
 import { Platform } from 'react-native';
 import { storage } from './storage';
 import Constants from 'expo-constants';
+import {router} from "expo-router";
 
 const debuggerHost = Constants.expoConfig?.hostUri;
 const DEV_IP = debuggerHost?.split(':')[0];
@@ -34,4 +35,31 @@ api.interceptors.request.use(
   (error) => {
     return Promise.reject(error);
   }
+);
+
+let isHandlingUnauthorized = false;
+
+api.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        const status = error.response?.status;
+        const url = error.config?.url ?? '';
+        const isAuthRoute = url.includes('/login') || url.includes('/logout');
+
+        if (status === 401 && !isAuthRoute && !isHandlingUnauthorized) {
+            isHandlingUnauthorized = true;
+
+            try {
+                await storage.deleteItem('userToken');
+                await storage.deleteItem('userData');
+                router.replace('/');
+            } finally {
+                setTimeout(() => {
+                    isHandlingUnauthorized = false;
+                }, 1000);
+            }
+        }
+
+        return Promise.reject(error);
+    }
 );
