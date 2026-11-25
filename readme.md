@@ -71,18 +71,60 @@ Aplikacja posiada publiczny endpoint sprawdzający, czy serwer funkcjonuje popra
 }
 ```
 
-## Uruchamianie testów
+## Testy
 
-**Aby uruchomić testy, w katalogu głównym projektu wykonaj:**
-```bash
+Projekt zawiera zautomatyzowany zestaw testów uruchamiany w izolowanym środowisku, dzięki czemu testy nie ingerują w lokalną bazę deweloperską.
+
+### Wykorzystane narzędzia
+
+- **Playwright** – testy End-to-End (E2E) w przeglądarce Chromium, weryfikujące pełny przepływ aplikacji (Expo Web → Axios → Laravel API → PostgreSQL).
+- **PHPUnit (Laravel Testing)** – testy jednostkowe i funkcjonalne (Feature) dla backendu w PHP/Laravel.
+- **Jest** – testy jednostkowe i komponentowe po stronie frontendu (React Native / Expo).
+- **Docker Compose (`docker-compose.test.yml`)** – uruchamianie odizolowanych kontenerów testowych (`backend_e2e` oraz osobnej bazy `db_test`) zasilanych dedykowanym seederem (`E2ETestSeeder`).
+
+### Zakres testów
+
+Testy obejmują weryfikację kluczowych warstw i ścieżek użytkownika w systemie:
+
+1. **Testy E2E (Playwright):**
+  - **Łączność frontendu z backendem:** weryfikacja komunikacji aplikacji webowej Expo z testowym API Laravela.
+  - **Poprawne logowanie (`POST /api/login`):** wypełnienie formularza danymi użytkownika z seedera, sprawdzenie odpowiedzi `200 OK`, otrzymania tokena Laravel Sanctum, zapisu sesji oraz przekierowania na ekran główny (`/home`).
+  - **Obsługa błędnych danych logowania:** próba logowania z nieprawidłowym hasłem, weryfikacja kodu `401 Unauthorized`, wyświetlenia komunikatu błędu (`Invalid credentials.`), braku zapisania tokena w `localStorage` oraz pozostania na ekranie logowania.
+2. **Testy backendu (Pest):**
+  - Weryfikacja działania endpointów API (m.in. `/api/health`, ścieżki autoryzacji), walidacji żądań oraz logiki biznesowej w Laravelu.
+
+### Jak uruchomić testy?
+
+Przed uruchomieniem testów upewnij się, że działa **Docker Desktop**.
+
+**1. Uruchomienie pełnego zestawu testów:**
+W katalogu głównym projektu wykonaj:
+```cmd
 .\test.bat
 ```
-Parametry podane po `.\test.bat` są przekazywane bezpośrednio do komendy `npx playwright test`. W związku z czym aby uruchomić testy E2E z podglądem okna przekaż parametr `--headed`.
-Po wykonaniu testów E2E możesz otworzyć z nich raport za pomoca komendy:
-```bash
+Skrypt automatycznie uruchomi testy, postawi izolowane kontenery testowe (`backend_e2e` i `db_test`), wykona migracje wraz z seederem `E2ETestSeeder`, uruchomi testy E2E w Playwright, a po zakończeniu posprząta kontenery testowe.
+
+**2. Uruchomienie testów E2E z podglądem przeglądarki lub dodatkowymi flagami:**
+Parametry podane po `.\test.bat` są przekazywane bezpośrednio do komendy `npx playwright test`:
+```cmd
+:: Uruchomienie z widocznym oknem przeglądarki
+.\test.bat --headed
+
+:: Uruchomienie pojedynczego pliku testowego z podglądem
+.\test.bat tests/LoginBadCredentials.spec.ts --headed
+
+:: Tryb debugowania krok po kroku
+.\test.bat --debug
+```
+
+**3. Podgląd raportu HTML z testów E2E:**
+Po zakończeniu testów możesz otworzyć interaktywny raport Playwright (ze zrzutami, krokami i zakładką Network):
+```cmd
 cd frontend
 npx playwright show-report
 ```
+
+---
 
 ## Przydatne komendy i rozwiązywanie problemów
 

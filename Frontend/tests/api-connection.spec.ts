@@ -8,7 +8,7 @@ test('frontend łączy się z API Laravela: logowanie', async ({ page }) => {
         if (msg.type() === 'error') console.error('BROWSER CONSOLE:', msg.text());
     });
 
-    await page.goto('http://localhost:8081');
+    await page.goto('/');
 
     await page.getByPlaceholder('Email').fill('student@example.com');
     await page.getByPlaceholder('Password').fill('Haslo123!');
